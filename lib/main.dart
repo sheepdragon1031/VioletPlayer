@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_torrent_streamer/flutter_torrent_streamer.dart';  
 import 'videoPlayer.dart';
-import 'after_layout.dart';
+// import 'after_layout.dart';
 void main() async {
 //  final Directory saveDir = await getExternalStorageDirectory();
   WidgetsFlutterBinding.ensureInitialized(); 
