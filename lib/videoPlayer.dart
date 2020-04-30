@@ -33,11 +33,11 @@ class _VideoAppState extends State<VideoApp> {
             'https://i.imgur.com/I6Xdraq.mp4'
             )
             ..initialize().then((_) {
-               
-            // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
                 setState((){
 
                 });
+                // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
+              
                 _urlLoading();
             });
     }
@@ -70,7 +70,7 @@ class _VideoAppState extends State<VideoApp> {
         bool isReind = iconName.toString() == 'IconData(U+0E020)';
         double rewind = MediaQuery.of(context).size.width * 0.1;
         double forward = MediaQuery.of(context).size.width * 0.6;
-
+        int sec = 5;
             return Positioned(
                 left: (isReind)?  rewind: forward,
                 // right: (iconName.toString() == 'IconData(U+0E01F)')? MediaQuery.of(context).size.width * 0.1 : 0,
@@ -83,20 +83,27 @@ class _VideoAppState extends State<VideoApp> {
                             child: Material(
                             color: Colors.transparent, //透明
                             borderRadius: BorderRadius.all(Radius.circular(100.0)),
-                            child:IconButton(
+                            child: IconButton(      
                                     key: (isReind)? _rewind: _forward,
                                     onPressed: () {
-
+                                        if(isReind){
+                                            //後退
+                                            _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() - sec));
+                                        }
+                                        else{
+                                            //快進
+                                            _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() + sec));
+                                        }
                                     },
                                     icon: Icon(
                                         iconName 
                                     ),
-                                )
+                                ),
                             )
                         ),
                 ),
             );
-        
+        //  Text("$sec 秒",style: TextStyle(fontSize: 8.0))
     }
   @override
   Widget build(BuildContext context) {
@@ -146,7 +153,6 @@ class _VideoAppState extends State<VideoApp> {
                                   
                                          print(_hidePlayControl);
                                         //  _controller.seekTo(Duration(seconds: 0/*any second you want*/ ));
-                                        // print( _controller.value.duration);
                                     },
                                     child: 
                                         AspectRatio(
