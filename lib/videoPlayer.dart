@@ -22,7 +22,8 @@ class _VideoAppState extends State<VideoApp> {
     // Timer _timer;
     bool _hidePlayControl = true;
     bool _videoInit = false;
-
+    bool _isFastChange = false;
+    int _fastSec = 15;
     VideoPlayerController _controller;
     bool isPlaying = false;
     @override
@@ -48,7 +49,6 @@ class _VideoAppState extends State<VideoApp> {
             int minSec = int.parse(strTime[1]);
             double sec = double.parse(strTime[2]);
             double total = hrSec * 3600 + minSec * 60 + sec;
-            print(total);
             return total;
     }
     
@@ -66,45 +66,101 @@ class _VideoAppState extends State<VideoApp> {
         return renderBoxRed.size.height;
       
     }
+    Widget fasttext (context , iconName){
+        bool isReind = iconName.toString() == 'IconData(U+0E020)';
+        double rewind = MediaQuery.of(context).size.width * 0.25;
+        double forward = MediaQuery.of(context).size.width * 0.72;
+        
+        return Positioned(
+                left: (isReind)?  rewind: forward,
+                // width: MediaQuery.of(context).size.width * 0.65,
+                height: _videoInit? _getAspectRatioHeight() * -.2 : 100, 
+                child:  Offstage(
+                    offstage: _hidePlayControl,
+                    child: Text('$_fastSec 秒',style: TextStyle(fontSize: 16.0),),
+                )
+        );
+    }
     Widget fastIcon (context , iconName){
         bool isReind = iconName.toString() == 'IconData(U+0E020)';
         double rewind = MediaQuery.of(context).size.width * 0.1;
         double forward = MediaQuery.of(context).size.width * 0.6;
-        int sec = 5;
-            return Positioned(
-                left: (isReind)?  rewind: forward,
-                // right: (iconName.toString() == 'IconData(U+0E01F)')? MediaQuery.of(context).size.width * 0.1 : 0,
-                width: MediaQuery.of(context).size.width * 0.3,
-                height: _videoInit? _getAspectRatioHeight() * 0.9 : 100, 
-                child:  Offstage(
-                    offstage: _hidePlayControl,
-                    child:ClipRRect(
+       
+        speedControl(){
+            double jumpTo = timeTosec(_controller.value.position) + _fastSec.toDouble() ;
+            if(_isFastChange){
+                 setState(() {
+                  _fastSec = 15;
+                });
+            }
+            if(jumpTo < timeTosec(_controller.value.duration) ){
+                setState(() {
+                  _fastSec += 15;
+                });
+            }
+            if(isReind){
+                _isFast = false;
+                //後退
+                _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() - _fastSec));
+            }
+            else{
+                _isFast = true;
+                //快進
+                _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() + _fastSec));
+            }
+             print(timeTosec(_controller.value.position).toInt() + _fastSec);
+        }
+        
+        return Positioned(
+            left: (isReind)?  rewind: forward,
+            // right: (iconName.toString() == 'IconData(U+0E01F)')? MediaQuery.of(context).size.width * 0.1 : 0,
+            width: MediaQuery.of(context).size.width * 0.3,
+            height: _videoInit? _getAspectRatioHeight() * 0.9 : 100, 
+            child:  Offstage(
+                offstage: _hidePlayControl,
+                child:
+                    ClipRRect(
                         borderRadius: BorderRadius.circular(50.0),
-                            child: Material(
-                            color: Colors.transparent, //透明
+                        child: 
+                            Material(
                             borderRadius: BorderRadius.all(Radius.circular(100.0)),
-                            child: IconButton(      
-                                    key: (isReind)? _rewind: _forward,
-                                    onPressed: () {
-                                        if(isReind){
-                                            //後退
-                                            _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() - sec));
-                                        }
-                                        else{
-                                            //快進
-                                            _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() + sec));
-                                        }
-                                    },
-                                    icon: Icon(
-                                        iconName 
-                                    ),
+                            color: Colors.transparent,
+                            child: 
+                            InkWell(
+                                onTap: (){
+                                   speedControl();
+                                },
+                                child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                       ClipRRect(
+                                        borderRadius: BorderRadius.circular(100.0),
+                                            child: Material(
+                                            color: Colors.transparent, //透明
+                                            borderRadius: BorderRadius.all(Radius.circular(100.0)),
+                                            child:
+                                             IconButton(      
+                                                    key: (isReind)? _rewind: _forward,
+                                                    onPressed: () {
+                                                        speedControl();
+                                                    },
+                                                    icon: Icon(
+                                                        iconName 
+                                                    ),
+                                                ),
+                                            )
+                                        ),
+                                        Text('$_fastSec 秒',
+                                         style: TextStyle(fontSize: 8.0))
+                                    ],
                                 ),
-                            )
+                            ),
                         ),
-                ),
-            );
-        //  Text("$sec 秒",style: TextStyle(fontSize: 8.0))
+                    ), 
+            ),
+        );
     }
+    
   @override
   Widget build(BuildContext context) {
         
@@ -143,15 +199,20 @@ class _VideoAppState extends State<VideoApp> {
                                                  Timer(Duration(milliseconds: 800), () {
                                                     setState(() {
                                                         _hidePlayControl = true; 
+                                                        _fastSec = 5;
                                                     });
                                                  });
                                                  
                                             }
-                                          
+                                            Timer(Duration(seconds: 1), () {
+                                                setState(() {
+                                                    _fastSec = 15;
+                                                });
+                                            });
+                                          print(_controller.value.position);
                                         });
                                        
                                   
-                                         print(_hidePlayControl);
                                         //  _controller.seekTo(Duration(seconds: 0/*any second you want*/ ));
                                     },
                                     child: 
