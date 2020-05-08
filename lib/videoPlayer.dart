@@ -23,7 +23,7 @@ class _VideoAppState extends State<VideoApp> {
     bool _hidePlayControl = true;
     bool _videoInit = false;
     bool _isFastChange = false;
-    int _fastSec = 15;
+    int _fastSec = 10;
     VideoPlayerController _controller;
     bool isPlaying = false;
     @override
@@ -35,7 +35,7 @@ class _VideoAppState extends State<VideoApp> {
             )
             ..initialize().then((_) {
                 setState((){
-
+                    _videoInit = false;
                 });
                 // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
               
@@ -51,6 +51,14 @@ class _VideoAppState extends State<VideoApp> {
             double total = hrSec * 3600 + minSec * 60 + sec;
             return total;
     }
+    String timeTomin(time){
+            var strTime = time.toString().split(':');
+            int hrSec =  int.parse(strTime[0]);
+            int minSec = int.parse(strTime[1]);
+            int sec = double.parse(strTime[2]).toInt();
+            int total = hrSec * 60 + minSec ;
+            return total.toString().padLeft(2,'0') +':' + sec.toString().padLeft(2,'0');
+    }
     
     void _urlLoading() async {
             await _controller.initialize();
@@ -61,9 +69,15 @@ class _VideoAppState extends State<VideoApp> {
             });
     }
      _getAspectRatioHeight(){
-        RenderBox renderBoxRed;
-        renderBoxRed = _aspectRatioKey.currentContext.findRenderObject();
-        return renderBoxRed.size.height;
+        if(_videoInit){
+            RenderBox renderBoxRed;
+            renderBoxRed = _aspectRatioKey.currentContext.findRenderObject();
+            return renderBoxRed.size.height;
+        }
+        else{
+            return 200;
+        }
+       
       
     }
     Widget fasttext (context , iconName){
@@ -88,23 +102,31 @@ class _VideoAppState extends State<VideoApp> {
        
         speedControl(){
             double jumpTo = timeTosec(_controller.value.position) + _fastSec.toDouble() ;
-            if(_isFastChange){
-                 setState(() {
-                  _fastSec = 15;
-                });
-            }
+           
             if(jumpTo < timeTosec(_controller.value.duration) ){
                 setState(() {
-                  _fastSec += 15;
+                  _fastSec += 10;
                 });
             }
             if(isReind){
-                _isFast = false;
+                if(_isFastChange == true){
+                    setState(() {
+                        _fastSec = 10;
+                        _isFastChange = false;
+
+                    });
+                }
+               
                 //後退
                 _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() - _fastSec));
             }
             else{
-                _isFast = true;
+                if(_isFastChange == false){
+                    setState(() {
+                        _fastSec = 10;
+                        _isFastChange = true;
+                    });
+                }
                 //快進
                 _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() + _fastSec));
             }
@@ -160,7 +182,73 @@ class _VideoAppState extends State<VideoApp> {
             ),
         );
     }
-    
+    Widget silderBar(){
+        if(_videoInit)
+        return Positioned(
+                top: _getAspectRatioHeight() * 0.85 ,
+                height:_getAspectRatioHeight() * 0.15 ,
+                width: MediaQuery.of(context).size.width ,
+                    child: Offstage(
+                        offstage: _hidePlayControl,
+                        child: Container(
+                            color: Colors.transparent,
+                            child: Row(
+                                children: <Widget>[
+                                    Expanded(
+                                        flex: 1,
+                                        child: Text(
+                                            '${timeTomin(_controller.value.position)}',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                    fontSize: 12
+                                                ),
+                                            ),
+                                    ),
+                                    Expanded(
+                                        flex: 8,  
+                                        child:
+                                            SliderTheme(
+                                                data: SliderTheme.of(context).copyWith(
+                                                    thumbShape: RoundSliderThumbShape(
+                                                        enabledThumbRadius: 8), //圓點
+                                                    overlayShape: RoundSliderOverlayShape(
+                                                        overlayRadius: 14),//hover圓點
+                                                ),
+                                                child: Slider(
+                                                    value: timeTosec(_controller.value.position),
+                                                    min: 0.0,
+                                                    max: timeTosec(_controller.value.duration),
+                                                    // divisions: 0,
+                                                    activeColor: Colors.grey,
+                                                    onChanged: (e) {
+                                                        setState(() {
+                                                            _controller.seekTo(Duration(seconds: e.roundToDouble().toInt()));
+                                                        });
+                                                },
+                                                
+                                            ),
+                                            
+                                            ),
+                                    ),
+                                    Expanded(
+                                         flex: 1,
+                                        child: Text(
+                                            '${timeTomin(_controller.value.duration)}',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                    fontSize: 12
+                                                ),
+                                            ),
+                                    ),
+                                   
+                                ],
+                            ),
+                        )
+                    )
+                );
+        else
+            return Container();
+    }
   @override
   Widget build(BuildContext context) {
         
@@ -196,20 +284,19 @@ class _VideoAppState extends State<VideoApp> {
                                             _hidePlayControl = false;
                                             if(_controller.value.isPlaying){
                                                 //  print('object1');
-                                                 Timer(Duration(milliseconds: 800), () {
+                                                 Timer(Duration(milliseconds: 1500), () {
                                                     setState(() {
                                                         _hidePlayControl = true; 
-                                                        _fastSec = 5;
                                                     });
                                                  });
                                                  
                                             }
                                             Timer(Duration(seconds: 1), () {
                                                 setState(() {
-                                                    _fastSec = 15;
+                                                    _fastSec = 10;
                                                 });
                                             });
-                                          print(_controller.value.position);
+                                          print(_controller.value);
                                         });
                                        
                                   
@@ -225,10 +312,11 @@ class _VideoAppState extends State<VideoApp> {
                                             child: Text("看來出了一些錯誤"),
                                         ),
                             ),
+                            
                             fastIcon(context, Icons.fast_forward),
                             fastIcon(context, Icons.fast_rewind),
-                               
-                            
+                            silderBar(),
+                           
                             Align(
                                 alignment: FractionalOffset(0.5, 1.5),
                                 child:
