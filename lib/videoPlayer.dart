@@ -107,7 +107,7 @@ class _VideoAppState extends State<VideoApp> {
     }
     Widget fastIcon (context , iconName){
         bool isReind = iconName.toString() == 'IconData(U+0E020)';
-        double rewind = MediaQuery.of(context).size.width * 0.0;
+        double rewind = MediaQuery.of(context).size.width * -0.1;
         double forward = MediaQuery.of(context).size.width * 0.6;
       
         speedControl(){
@@ -149,11 +149,11 @@ class _VideoAppState extends State<VideoApp> {
                 child:
                     Container(
                         padding: EdgeInsets.all(0),
-                        width: MediaQuery.of(context).size.width * 0.4,
+                        width: MediaQuery.of(context).size.width * 0.5,
                         height: _videoInit? _getAspectRatioHeight() * 0.8 : 100, 
                         child:  
                         ClipRRect(
-                        // borderRadius: BorderRadius.circular(5.0),
+                        borderRadius: BorderRadius.circular(50.0),
                         child: 
                             Material(
                             borderRadius: BorderRadius.all(Radius.circular(50.0)),
@@ -189,8 +189,18 @@ class _VideoAppState extends State<VideoApp> {
                                                                 // ),
                                                                 Text((isReind)?  '${_backSec+10} 秒': '${_fastSec+10} 秒',
                                                                 style: TextStyle(
+                                                                    shadows:  <Shadow>[
+                                                                        Shadow(
+                                                                        offset: Offset(0.0, 0.0),
+                                                                        blurRadius: 20.0,
+                                                                        color: Colors.grey[50]),
+                                                                        Shadow(
+                                                                        offset: Offset(0.0, 0.0),
+                                                                        blurRadius: 10.0,
+                                                                        color: Colors.grey[500]),
+                                                                    ],
                                                                     fontSize: 10.0,
-                                                                    color: Colors.grey[0],
+                                                                    color: Colors.grey[50],
                                                                     ))
                                                             ]
                                                         )
