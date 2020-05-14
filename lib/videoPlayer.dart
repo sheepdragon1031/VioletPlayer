@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
@@ -22,17 +23,22 @@ class _VideoAppState extends State<VideoApp> {
     // Timer _timer;
     bool _hidePlayControl = true;
     bool _videoInit = false;
-    bool _isFastChange = false;
-    int _fastSec = 10;
+    int _seconds = 10;
+    int _fastSec = 0;
+    int _backSec = 0;
     VideoPlayerController _controller;
-    bool isPlaying = false;
+    // bool isPlaying = false;
     @override
         void initState() {
             super.initState();
-            _controller = VideoPlayerController.network(
-            //    'https://router.sheepdragon.ga/download/%5bNekomoe%20kissaten%5d%5bAzur%20Lane%5d%5b11%5d%5b1080p%5d%5bCHT%5d.mp4'
-            'https://i.imgur.com/I6Xdraq.mp4'
-            )
+            // _controller = VideoPlayerController.network(
+            // //    'https://router.sheepdragon.ga/download/%5bNekomoe%20kissaten%5d%5bAzur%20Lane%5d%5b11%5d%5b1080p%5d%5bCHT%5d.mp4'
+            // 'https://i.imgur.com/I6Xdraq.mp4'
+            // )
+            var file = new File('/storage/emulated/0/Download/[Nekomoe kissaten][Azur Lane][11][1080p][CHT].mp4');
+            
+         
+            _controller = VideoPlayerController.file(file)
             ..initialize().then((_) {
                 setState((){
                     _videoInit = false;
@@ -91,61 +97,66 @@ class _VideoAppState extends State<VideoApp> {
                 height: _videoInit? _getAspectRatioHeight() * -.2 : 100, 
                 child:  Offstage(
                     offstage: _hidePlayControl,
-                    child: Text('$_fastSec 秒',style: TextStyle(fontSize: 16.0),),
+                    child: Text((isReind)?'$_backSec 秒':'$_fastSec 秒',
+                    style: TextStyle(
+                        fontSize: 16.0,
+                        ),
+                    ),
                 )
         );
     }
     Widget fastIcon (context , iconName){
         bool isReind = iconName.toString() == 'IconData(U+0E020)';
-        double rewind = MediaQuery.of(context).size.width * 0.1;
+        double rewind = MediaQuery.of(context).size.width * 0.0;
         double forward = MediaQuery.of(context).size.width * 0.6;
-       
+      
         speedControl(){
-            double jumpTo = timeTosec(_controller.value.position) + _fastSec.toDouble() ;
-           
-            if(jumpTo < timeTosec(_controller.value.duration) ){
-                setState(() {
-                  _fastSec += 10;
-                });
-            }
+            setState(() {
+                _hidePlayControl = false; 
+            });
+            
             if(isReind){
-                if(_isFastChange == true){
+                
                     setState(() {
-                        _fastSec = 10;
-                        _isFastChange = false;
-
+                        _backSec += _seconds;
+                    });
+                //後退
+                _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() - _backSec));
+            }
+            else{
+                double jumpTo = timeTosec(_controller.value.position) + _fastSec.toDouble() ;
+                if(jumpTo < timeTosec(_controller.value.duration) ){
+                  
+                    setState(() {
+                        _fastSec += _seconds;
                     });
                 }
                
-                //後退
-                _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() - _fastSec));
-            }
-            else{
-                if(_isFastChange == false){
-                    setState(() {
-                        _fastSec = 10;
-                        _isFastChange = true;
-                    });
-                }
                 //快進
                 _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() + _fastSec));
             }
-             print(timeTosec(_controller.value.position).toInt() + _fastSec);
+            print(_backSec);
+            
         }
         
         return Positioned(
             left: (isReind)?  rewind: forward,
             // right: (iconName.toString() == 'IconData(U+0E01F)')? MediaQuery.of(context).size.width * 0.1 : 0,
-            width: MediaQuery.of(context).size.width * 0.3,
-            height: _videoInit? _getAspectRatioHeight() * 0.9 : 100, 
+            // width: MediaQuery.of(context).size.width * 0.4,
+            // height: _videoInit? _getAspectRatioHeight() * 0.9 : 100, 
             child:  Offstage(
                 offstage: _hidePlayControl,
                 child:
-                    ClipRRect(
-                        borderRadius: BorderRadius.circular(50.0),
+                    Container(
+                        padding: EdgeInsets.all(0),
+                        width: MediaQuery.of(context).size.width * 0.4,
+                        height: _videoInit? _getAspectRatioHeight() * 0.8 : 100, 
+                        child:  
+                        ClipRRect(
+                        // borderRadius: BorderRadius.circular(5.0),
                         child: 
                             Material(
-                            borderRadius: BorderRadius.all(Radius.circular(100.0)),
+                            borderRadius: BorderRadius.all(Radius.circular(50.0)),
                             color: Colors.transparent,
                             child: 
                             InkWell(
@@ -155,30 +166,43 @@ class _VideoAppState extends State<VideoApp> {
                                 child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: <Widget>[
-                                       ClipRRect(
-                                        borderRadius: BorderRadius.circular(100.0),
-                                            child: Material(
-                                            color: Colors.transparent, //透明
-                                            borderRadius: BorderRadius.all(Radius.circular(100.0)),
-                                            child:
-                                             IconButton(      
-                                                    key: (isReind)? _rewind: _forward,
-                                                    onPressed: () {
-                                                        speedControl();
-                                                    },
-                                                    icon: Icon(
-                                                        iconName 
-                                                    ),
-                                                ),
-                                            )
-                                        ),
-                                        Text('$_fastSec 秒',
-                                         style: TextStyle(fontSize: 8.0))
+                                                // ClipRRect(
+                                                // borderRadius: BorderRadius.circular(100.0),
+                                                //     child: Material(
+                                                //     color: Colors.blue, //透明
+                                                //     borderRadius: BorderRadius.all(Radius.circular(100.0)),
+                                                //     child:
+                                                        Column(
+                                                            children: <Widget>[
+                                                                Icon(
+                                                                    (isReind)?Icons.fast_rewind:Icons.fast_forward,
+                                                                    size: 30,
+                                                                ),
+                                                                // IconButton(      
+                                                                //     key: (isReind)? _rewind: _forward,
+                                                                //     onPressed: () {
+                                                                //         speedControl();
+                                                                //     },
+                                                                //     icon: Icon(
+                                                                //         iconName 
+                                                                //     ),
+                                                                // ),
+                                                                Text((isReind)?  '${_backSec+10} 秒': '${_fastSec+10} 秒',
+                                                                style: TextStyle(
+                                                                    fontSize: 10.0,
+                                                                    color: Colors.grey[0],
+                                                                    ))
+                                                            ]
+                                                        )
+                                                //     )
+                                                // ),
                                     ],
                                 ),
                             ),
                         ),
                     ), 
+                    )
+                   
             ),
         );
     }
@@ -231,7 +255,7 @@ class _VideoAppState extends State<VideoApp> {
                                             ),
                                     ),
                                     Expanded(
-                                         flex: 1,
+                                        flex: 1,
                                         child: Text(
                                             '${timeTomin(_controller.value.duration)}',
                                             textAlign: TextAlign.center,
@@ -281,25 +305,25 @@ class _VideoAppState extends State<VideoApp> {
                                         // print(_controller.value.isBuffering);    
                                       
                                        setState(() {
+                                             Timer(Duration(seconds: 2), () {
+                                               
+                                                    _fastSec = 0;
+                                                    _backSec = 0;
+                                               
+                                            });
+                                       
                                             _hidePlayControl = false;
+                                        });
                                             if(_controller.value.isPlaying){
-                                                //  print('object1');
-                                                 Timer(Duration(milliseconds: 1500), () {
+                                                 Timer(Duration(seconds: 2), () {
                                                     setState(() {
                                                         _hidePlayControl = true; 
                                                     });
-                                                 });
-                                                 
+                                                 });    
                                             }
-                                            Timer(Duration(seconds: 1), () {
-                                                setState(() {
-                                                    _fastSec = 10;
-                                                });
-                                            });
-                                          print(_controller.value);
-                                        });
+                                          
                                        
-                                  
+                                        
                                         //  _controller.seekTo(Duration(seconds: 0/*any second you want*/ ));
                                     },
                                     child: 
