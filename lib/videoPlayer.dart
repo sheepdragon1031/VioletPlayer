@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter/material.dart';
+import 'package:sleek_circular_slider/sleek_circular_slider.dart';
+import 'package:screen/screen.dart';
 
 void main() => runApp(VideoApp());
 
@@ -11,8 +13,8 @@ GlobalKey _aspectRatioKey = GlobalKey();
 GlobalKey _playerKey = GlobalKey();
 
 GlobalKey _playing = GlobalKey();
-GlobalKey _rewind = GlobalKey();
-GlobalKey _forward = GlobalKey();
+// GlobalKey _rewind = GlobalKey();
+// GlobalKey _forward = GlobalKey();
 class VideoApp extends StatefulWidget {
     @override
     _VideoAppState createState() => _VideoAppState();
@@ -21,23 +23,45 @@ class VideoApp extends StatefulWidget {
 
 class _VideoAppState extends State<VideoApp> {
     // Timer _timer;
+    //  _VideoAppState({
+    //   this.videoInit,
+    // });
+    
+
     bool _hidePlayControl = true;
-    bool _videoInit = false;
+    bool _videoInit= false;
+    bool _isVolume = true;
+    bool _isBrightness =true;
+    bool _isDarkMode = false;
     int _seconds = 10;
     int _fastSec = 0;
     int _backSec = 0;
+    double _volume = 0;
+    double _onVolume = 0;
+    double _brightness = 0;
+    double _onBrightness =  0;
+    
     VideoPlayerController _controller;
+    Offset dragStart;
+    Offset dragDown;
+    bool dragHorizontal = false;
+
+    int maxVol;
     // bool isPlaying = false;
+     
     @override
         void initState() {
             super.initState();
             // _controller = VideoPlayerController.network(
-            // //    'https://router.sheepdragon.ga/download/%5bNekomoe%20kissaten%5d%5bAzur%20Lane%5d%5b11%5d%5b1080p%5d%5bCHT%5d.mp4'
             // 'https://i.imgur.com/I6Xdraq.mp4'
-            // )
-            var file = new File('/storage/emulated/0/Download/[Nekomoe kissaten][Azur Lane][11][1080p][CHT].mp4');
+            // ) ..initialize().then((_) {
+            //     setState((){
+            //         _videoInit = false;
+            //     });
+            //     _urlLoading();
+            // });
             
-         
+            var file = new File('/storage/emulated/0/Download/[Nekomoe kissaten][Azur Lane][11][1080p][CHT].mp4');
             _controller = VideoPlayerController.file(file)
             ..initialize().then((_) {
                 setState((){
@@ -47,8 +71,20 @@ class _VideoAppState extends State<VideoApp> {
               
                 _urlLoading();
             });
+            updateVal();
     }
-   
+    
+    
+    Future<void> updateVal() async {
+        
+        _onBrightness = await Screen.brightness;
+       
+        setState(() {
+            _brightness = _onBrightness;
+            _volume = _controller.value.volume * 100;
+        });
+        
+    }
     double timeTosec(time){
             var strTime = time.toString().split(':');
             int hrSec =  int.parse(strTime[0]);
@@ -71,7 +107,7 @@ class _VideoAppState extends State<VideoApp> {
             setState(() {
                 _videoInit = true;
                 //   _videoError = false;`
-                _controller.play();
+                // _controller.play();
             });
     }
      _getAspectRatioHeight(){
@@ -86,6 +122,8 @@ class _VideoAppState extends State<VideoApp> {
        
       
     }
+
+    
     Widget fasttext (context , iconName){
         bool isReind = iconName.toString() == 'IconData(U+0E020)';
         double rewind = MediaQuery.of(context).size.width * 0.25;
@@ -138,7 +176,7 @@ class _VideoAppState extends State<VideoApp> {
             print(_backSec);
             
         }
-        
+       
         return Positioned(
             left: (isReind)?  rewind: forward,
             // right: (iconName.toString() == 'IconData(U+0E01F)')? MediaQuery.of(context).size.width * 0.1 : 0,
@@ -146,73 +184,81 @@ class _VideoAppState extends State<VideoApp> {
             // height: _videoInit? _getAspectRatioHeight() * 0.9 : 100, 
             child:  Offstage(
                 offstage: _hidePlayControl,
-                child:
-                    Container(
-                        padding: EdgeInsets.all(0),
+               
+                    child:Container(
                         width: MediaQuery.of(context).size.width * 0.5,
                         height: _videoInit? _getAspectRatioHeight() * 0.8 : 100, 
                         child:  
-                        ClipRRect(
-                        borderRadius: BorderRadius.circular(50.0),
-                        child: 
-                            Material(
-                            borderRadius: BorderRadius.all(Radius.circular(50.0)),
-                            color: Colors.transparent,
-                            child: 
-                            InkWell(
-                                onTap: (){
-                                   speedControl();
-                                },
-                                child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: <Widget>[
-                                                // ClipRRect(
-                                                // borderRadius: BorderRadius.circular(100.0),
-                                                //     child: Material(
-                                                //     color: Colors.blue, //透明
-                                                //     borderRadius: BorderRadius.all(Radius.circular(100.0)),
-                                                //     child:
-                                                        Column(
-                                                            children: <Widget>[
-                                                                Icon(
-                                                                    (isReind)?Icons.fast_rewind:Icons.fast_forward,
-                                                                    size: 30,
-                                                                ),
-                                                                // IconButton(      
-                                                                //     key: (isReind)? _rewind: _forward,
-                                                                //     onPressed: () {
-                                                                //         speedControl();
-                                                                //     },
-                                                                //     icon: Icon(
-                                                                //         iconName 
-                                                                //     ),
-                                                                // ),
-                                                                Text((isReind)?  '${_backSec+10} 秒': '${_fastSec+10} 秒',
-                                                                style: TextStyle(
-                                                                    shadows:  <Shadow>[
-                                                                        Shadow(
-                                                                        offset: Offset(0.0, 0.0),
-                                                                        blurRadius: 20.0,
-                                                                        color: Colors.grey[50]),
-                                                                        Shadow(
-                                                                        offset: Offset(0.0, 0.0),
-                                                                        blurRadius: 10.0,
-                                                                        color: Colors.grey[500]),
-                                                                    ],
-                                                                    fontSize: 10.0,
-                                                                    color: Colors.grey[50],
-                                                                    ))
-                                                            ]
-                                                        )
-                                                //     )
-                                                // ),
-                                    ],
-                                ),
-                            ),
+                        Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                                        ClipRRect(
+                                        borderRadius: BorderRadius.circular(100.0),
+                                            child: Material(
+                                            color: Colors.transparent, //透明
+                                            borderRadius: BorderRadius.all(Radius.circular(100.0)),
+                                            child:
+                                                InkWell(
+                                                    splashColor: Colors.black54,
+                                                    onTap: (){
+                                                        speedControl();
+                                                    },
+                                                    child:Container(
+                                                        height: 58,
+                                                        width: 58,
+                                                        child:Column(
+                                                             mainAxisAlignment: MainAxisAlignment.end,
+                                                        children: <Widget>[
+                                                            
+                                                            Stack(
+                                                                alignment: Alignment(0, 102),
+                                                                children: <Widget>[
+                                                                    Positioned(
+                                                                        top: -1,
+                                                                        left: (isReind)?-2:0,
+                                                                        child:  Icon(
+                                                                            (isReind)?Icons.fast_rewind:Icons.fast_forward,
+                                                                            size: 32,
+                                                                            color: Colors.black54,
+                                                                        ),),
+                                                                    Icon(
+                                                                        (isReind)?Icons.fast_rewind:Icons.fast_forward,
+                                                                        size: 30,
+                                                                    ),
+                                                                ],
+                                                            ),
+                                                            // IconButton(      
+                                                            //     key: (isReind)? _rewind: _forward,
+                                                            //     onPressed: () {
+                                                            //         speedControl();
+                                                            //     },
+                                                            //     icon: Icon(
+                                                            //         iconName 
+                                                            //     ),
+                                                            // ),
+                                                            Text((isReind)?  '${_backSec+10} 秒': '${_fastSec+10} 秒',
+                                                            style: TextStyle(
+                                                                shadows:  <Shadow>[
+                                                                    Shadow(
+                                                                    offset: Offset(0.0, 0.0),
+                                                                    blurRadius: 20.0,
+                                                                    color: Colors.grey[50]),
+                                                                    Shadow(
+                                                                    offset: Offset(0.0, 0.0),
+                                                                    blurRadius: 10.0,
+                                                                    color: Colors.grey[500]),
+                                                                ],
+                                                                fontSize: 10.0,
+                                                                color: Colors.white,
+                                                                ))
+                                                        ]
+                                                    ))
+                                                )
+                                            )
+                                        ),
+                            ],
                         ),
-                    ), 
-                    )
-                   
+                )
             ),
         );
     }
@@ -283,16 +329,180 @@ class _VideoAppState extends State<VideoApp> {
         else
             return Container();
     }
+    
+    Widget brightness(){
+       
+        return 
+                Align(
+                    alignment: Alignment.center,
+                    child:
+                    Offstage(
+                        offstage: _isBrightness,
+                        child: SleekCircularSlider(
+                            min: 0,
+                            max: 100,
+                            initialValue: _brightness,
+                            
+                            onChange: (double value){
+                                // print(value);
+                            },
+                            innerWidget: (double value) {
+                                final roundedValue = value.ceil().toInt().toString();
+                                return 
+                                Container(
+                                    margin: EdgeInsets.all(9),
+                                    child:ClipRRect(
+                                        borderRadius: BorderRadius.circular(100.0),
+                                        child:Container(
+                                                // color: _isDarkMode ? Colors.black38: Colors.white70,
+                                                color: _brightness < 20?
+                                                    Colors.black54:
+                                                    _brightness < 40?
+                                                    Colors.black38:
+                                                    _brightness < 70?
+                                                    Colors.black26:
+                                                    Colors.black12,
+                                                child: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: <Widget>[
+                                                        Icon(
+                                                            Icons.settings_brightness,
+                                                            size: 40,
+                                                        ),
+                                                        Text('$roundedValue%',
+                                                            style: TextStyle(
+                                                                fontWeight: FontWeight.w800,
+                                                                fontSize: 20,
+                                                            )
+                                                        ),
+                                                    ],
+                                                ),
+                                            ),
+                                        ),
+                                );
+                            },
+                            appearance: CircularSliderAppearance(
+                                // counterClockwise: true,
+                                spinnerDuration: 100,
+                                customColors: CustomSliderColors(
+                                    trackColor: Color(0xffffecd2),
+                                    progressBarColors: [
+                                        Color(0xfff6d365),
+                                        Color(0xfffda085),
+                                    ],
+                                    // shadowColor: Colors.black38,
+                                ),
+                                customWidths: CustomSliderWidths(
+                                    trackWidth: 2,
+                                    progressBarWidth: 8,
+                                    shadowWidth: 10),
+                                size: 100,
+                                startAngle: 150,
+                                angleRange: 360,
+                                
+                            ),
+                        )
+                        
+                       
+                    ) 
+                );
+                
+        
+    }
+    Widget volume(){
+      
+        return 
+                Align(
+                    alignment: Alignment.center,
+                    child:
+                    Offstage(
+                        offstage: _isVolume,
+                        child: SleekCircularSlider(
+                            min: 0,
+                            max: 100,
+                            initialValue: _volume,
+                            
+                            onChange: (double value){
+                                // print(value);
+                            },
+                            innerWidget: (double value) {
+                                final roundedValue = value.ceil().toInt().toString();
+                                return 
+                                Container(
+                                    margin: EdgeInsets.all(9),
+                                    child:ClipRRect(
+                                        borderRadius: BorderRadius.circular(100.0),
+                                        child:Container(
+                                                color: _isDarkMode ? Colors.black38: Colors.white70,
+                                                child: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: <Widget>[
+                                                        Icon(
+                                                            _volume == 0?
+                                                            Icons.volume_off:
+                                                            _volume < 20?
+                                                            Icons.volume_mute:
+                                                            _volume < 70?
+                                                            Icons.volume_down:
+                                                            Icons.volume_up,
+                                                            size: 40,
+                                                        ),
+                                                        Text('$roundedValue%',
+                                                            style: TextStyle(
+                                                                fontWeight: FontWeight.w800,
+                                                                fontSize: 20,
+                                                            )
+                                                        ),
+                                                    ],
+                                                ),
+                                            ),
+                                        ),
+                                );
+                            },
+                            appearance: CircularSliderAppearance(
+                                counterClockwise: true,
+                                spinnerDuration: 100,
+                                customColors: CustomSliderColors(
+                                    trackColor: Color(0xffc7dffa),
+                                    // gradientStartAngle : 0,
+                                    // gradientEndAngle : 180,
+                                    progressBarColors: [
+                                        Color(0xffe0c3fc),
+                                        Color(0xff8ec5fc),
+                                        Color(0xff38f9d7),
+                                    ],
+                                    // shadowColor: Colors.black38,
+                                ),
+                                customWidths: CustomSliderWidths(
+                                    trackWidth: 2,
+                                    progressBarWidth: 8,
+                                    shadowWidth: 10),
+                                size: 100,
+                                startAngle: 50,
+                                angleRange: 360,
+                                
+                            ),
+                        )
+                        
+                       
+                    ) 
+                );
+                
+        
+    }
   @override
   Widget build(BuildContext context) {
         
         SystemChrome.setSystemUIOverlayStyle(
             SystemUiOverlayStyle(statusBarBrightness: Brightness.dark) // Or Brightness.dark
         );
-         
+        bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        setState(() {
+          _isDarkMode = isDarkMode;
+        });
+       
         return MaterialApp(
             darkTheme: ThemeData(
-                
                 brightness: Brightness.dark,
             ),
             title: 'Video Demo',
@@ -302,6 +512,7 @@ class _VideoAppState extends State<VideoApp> {
                 children: <Widget>[
                     Container(height: 24),
                     Container(
+                        
                         child: Stack(
                         alignment: AlignmentDirectional.center,
                         children: <Widget>[
@@ -309,13 +520,103 @@ class _VideoAppState extends State<VideoApp> {
                                 key: _playerKey,
                                 child:
                                 _controller.value.initialized?
-                                GestureDetector( //GestureDetector
+                                GestureDetector(
+                                    
+                                    onHorizontalDragStart: (details) {
+                                        double unitWidth = MediaQuery.of(context).size.width * 0.10;
+                                        dragStart = details.globalPosition;
+                                        double dy = (dragDown.dy - dragStart.dy);
+                                        double dx = dragStart.dx;
+                                        print(dy.abs() > 5 && dx > unitWidth * 6.0 && dx < unitWidth * 8.0);
+                                        
+                                        if(dy.abs() > 5 && dx > unitWidth * 2.0 && dx < unitWidth * 4.0){
+                                            setState(() {
+                                                _onBrightness = _brightness;
+                                                _isBrightness = false;
+                                                _isVolume = true;
+                                            });
+                                        }
+                                        if(dy.abs() > 5 && dx > unitWidth * 6.0 && dx < unitWidth * 8.0){
+                                             setState(() {
+                                                _onVolume = _volume;
+                                                _isVolume = false;
+                                                _isBrightness = true;
+                                            });
+                                        }
+                        
+                                    },
+                                    onHorizontalDragDown: (details){
+                                         dragDown = details.globalPosition;
+                                        // print(details);
+                                    },
+                                    onHorizontalDragUpdate: (details) {
+                                        double maxLimit = 100;
+                                        double minLimit = 0;
+                                        Offset dragUpdate = details.globalPosition;
+                                        double offsetY = dragStart.dy - dragUpdate.dy;
+                                        double dy = (dragDown.dy - dragStart.dy);
+                                        double brightness, volume ;
+                                        if(dragStart != null){
+                                            final directionUp = offsetY > 0 ? true : false;
+                                            
+                                            if(dy.abs() > 5 ){
+                                               
+                                                offsetY = offsetY.abs();
+
+                                                if(directionUp){
+                                                    brightness = _onBrightness + offsetY;
+                                                    volume = _onVolume + offsetY;
+                                                    if(_onBrightness + offsetY > maxLimit)
+                                                        brightness = maxLimit;
+                                                    if(_onVolume + offsetY > maxLimit)
+                                                        volume = maxLimit;
+                                                }
+                                                else{
+                                                    brightness = _onBrightness - offsetY ;
+                                                    volume = _onVolume - offsetY;
+                                                    if(_onBrightness - offsetY < minLimit)
+                                                        brightness = minLimit;  
+                                                    if(_onVolume - offsetY < minLimit)
+                                                        volume = minLimit;
+                                                }
+
+                                                setState(() {
+                                                    if(!_isBrightness )
+                                                        _brightness = brightness;
+                                                   
+                                                    if(!_isVolume)
+                                                        _volume = volume;
+                                                });
+                                                if(!_isBrightness)
+                                                     Screen.setBrightness(brightness * 0.01);
+                                                if(!_isVolume)
+                                                     _controller.setVolume(volume * 0.01);
+                                                    
+                                            }
+                                        }
+                                    },
+                                    onHorizontalDragEnd: (details){
+                                        
+                                        Timer(Duration(microseconds: 500), () {
+                                            setState(() {
+                                                _isVolume = true;
+                                                _isBrightness = true;
+                                                dragHorizontal = false;
+                                            });
+                                        });
+                                    }, //Gestu
+                                    //GestureDetector
+                                    onDoubleTap:(){
+                                        setState(() {
+                                            _hidePlayControl = !_hidePlayControl; 
+                                        });
+                                    },
                                     onTap: () {
                                         // print(_controller.value);
                                         // print(_controller.value.isBuffering);    
                                       
                                        setState(() {
-                                             Timer(Duration(seconds: 2), () {
+                                            Timer(Duration(seconds: 2), () {
                                                
                                                     _fastSec = 0;
                                                     _backSec = 0;
@@ -352,7 +653,7 @@ class _VideoAppState extends State<VideoApp> {
                             silderBar(),
                            
                             Align(
-                                alignment: FractionalOffset(0.5, 1.5),
+                                // alignment: FractionalOffset(0.5, 0),
                                 child:
                                 Offstage(
                                     offstage: _hidePlayControl,
@@ -360,10 +661,11 @@ class _VideoAppState extends State<VideoApp> {
                                     ClipRRect( //容器圓形
                                         borderRadius: BorderRadius.circular(100.0),
                                         child: Material( //動畫效果
-                                            color: Color.fromRGBO( 0, 0, 0, .15), //透明
+                                            color:  _isDarkMode ? Colors.black38: Colors.white70, //透明
                                             borderRadius: BorderRadius.all(Radius.circular(100.0)),
                                             // shape: CircleBorder(),
-                                                child:IconButton(
+                                            child:IconButton(
+                                                iconSize: 55,
                                                 key: _playing,
                                                 onPressed: () {
                                                     setState(() {
@@ -380,6 +682,7 @@ class _VideoAppState extends State<VideoApp> {
                                                 },
                                                 icon: Icon(
                                                     _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                                                    size: 40,
                                                 ),
                                             ),
                                             
@@ -387,6 +690,8 @@ class _VideoAppState extends State<VideoApp> {
                                     )
                                 )
                             ),
+                            brightness(),
+                            volume(),
                         ],
                         ),
                     ),
