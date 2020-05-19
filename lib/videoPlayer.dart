@@ -28,14 +28,15 @@ class _VideoAppState extends State<VideoApp> {
     // });
     
 
-    bool _hidePlayControl = true;
+    bool _hidePlayControl = true , _hidefastControl = true , _hideLastControl = true;
     bool _videoInit= false;
-    bool _isVolume = true;
-    bool _isBrightness =true;
+    bool _hideVolume = true;
+    bool _hideBrightness =true;
     bool _isDarkMode = false;
     int _seconds = 10;
     int _fastSec = 0;
     int _backSec = 0;
+    int _playSec = 0;
     double _volume = 0;
     double _onVolume = 0;
     double _brightness = 0;
@@ -183,7 +184,7 @@ class _VideoAppState extends State<VideoApp> {
             // width: MediaQuery.of(context).size.width * 0.4,
             // height: _videoInit? _getAspectRatioHeight() * 0.9 : 100, 
             child:  Offstage(
-                offstage: _hidePlayControl,
+                offstage: (isReind)?_hideLastControl:_hidefastControl,
                
                     child:Container(
                         width: MediaQuery.of(context).size.width * 0.5,
@@ -337,7 +338,7 @@ class _VideoAppState extends State<VideoApp> {
                     alignment: Alignment.center,
                     child:
                     Offstage(
-                        offstage: _isBrightness,
+                        offstage: _hideBrightness,
                         child: SleekCircularSlider(
                             min: 0,
                             max: 100,
@@ -416,7 +417,7 @@ class _VideoAppState extends State<VideoApp> {
                     alignment: Alignment.center,
                     child:
                     Offstage(
-                        offstage: _isVolume,
+                        offstage: _hideVolume,
                         child: SleekCircularSlider(
                             min: 0,
                             max: 100,
@@ -527,22 +528,24 @@ class _VideoAppState extends State<VideoApp> {
                                         dragStart = details.globalPosition;
                                         double dy = (dragDown.dy - dragStart.dy);
                                         double dx = dragStart.dx;
-                                        print(dy.abs() > 5 && dx > unitWidth * 6.0 && dx < unitWidth * 8.0);
+                                       
                                         
                                         if(dy.abs() > 5 && dx > unitWidth * 2.0 && dx < unitWidth * 4.0){
                                             setState(() {
                                                 _onBrightness = _brightness;
-                                                _isBrightness = false;
-                                                _isVolume = true;
+                                                _hideBrightness = false;
+                                                _hideVolume = true;
                                             });
                                         }
                                         if(dy.abs() > 5 && dx > unitWidth * 6.0 && dx < unitWidth * 8.0){
                                              setState(() {
                                                 _onVolume = _volume;
-                                                _isVolume = false;
-                                                _isBrightness = true;
+                                                _hideVolume = false;
+                                                _hideBrightness = true;
                                             });
                                         }
+                                        _playSec = timeTosec(_controller.value.position).toInt();
+                                        
                         
                                     },
                                     onHorizontalDragDown: (details){
@@ -556,6 +559,9 @@ class _VideoAppState extends State<VideoApp> {
                                         double offsetY = dragStart.dy - dragUpdate.dy;
                                         double dy = (dragDown.dy - dragStart.dy);
                                         double brightness, volume ;
+                                        double dx = (dragStart.dx - dragDown.dx);
+                                        double offsetX = (dragUpdate.dx - dragStart.dx);
+
                                         if(dragStart != null){
                                             final directionUp = offsetY > 0 ? true : false;
                                             
@@ -581,17 +587,34 @@ class _VideoAppState extends State<VideoApp> {
                                                 }
 
                                                 setState(() {
-                                                    if(!_isBrightness )
+                                                    if(!_hideBrightness )
                                                         _brightness = brightness;
                                                    
-                                                    if(!_isVolume)
+                                                    if(!_hideVolume)
                                                         _volume = volume;
                                                 });
-                                                if(!_isBrightness)
+                                                if(!_hideBrightness)
                                                      Screen.setBrightness(brightness * 0.01);
-                                                if(!_isVolume)
+                                                if(!_hideVolume)
                                                      _controller.setVolume(volume * 0.01);
                                                     
+                                            }
+                                            if(dx.abs()>10){
+                                               
+                                                if(offsetX > 0)
+                                                    setState(() {
+                                                        _hidefastControl = false;
+                                                        _fastSec = offsetX.toInt().abs();
+                                                        _hideLastControl = true;
+                                                    });
+                                                else if(offsetX < 0)
+                                                    setState(() {
+                                                      _hideLastControl = false;
+                                                      _backSec = offsetX.toInt().abs();
+                                                      _hidefastControl = true;
+                                                    });
+                                                     print(offsetX.toInt());
+                                                _controller.seekTo(Duration(seconds: _playSec + offsetX.toInt()));
                                             }
                                         }
                                     },
@@ -599,16 +622,20 @@ class _VideoAppState extends State<VideoApp> {
                                         
                                         Timer(Duration(microseconds: 500), () {
                                             setState(() {
-                                                _isVolume = true;
-                                                _isBrightness = true;
+                                                _hideVolume = true;
+                                                _hideBrightness = true;
                                                 dragHorizontal = false;
+                                                _hideLastControl = true;
+                                                _hidefastControl = true;
                                             });
                                         });
                                     }, //Gestu
                                     //GestureDetector
                                     onDoubleTap:(){
                                         setState(() {
-                                            _hidePlayControl = !_hidePlayControl; 
+                                            _hidePlayControl = !_hidePlayControl;
+                                            _hideLastControl = _hidePlayControl;
+                                            _hidefastControl = _hidePlayControl; 
                                         });
                                     },
                                     onTap: () {
@@ -624,11 +651,15 @@ class _VideoAppState extends State<VideoApp> {
                                             });
                                        
                                             _hidePlayControl = false;
+                                            _hideLastControl = false;
+                                            _hidefastControl = false; 
                                         });
                                             if(_controller.value.isPlaying){
                                                  Timer(Duration(seconds: 2), () {
                                                     setState(() {
                                                         _hidePlayControl = true; 
+                                                        _hideLastControl = true;
+                                                        _hidefastControl = true; 
                                                     });
                                                  });    
                                             }
@@ -672,10 +703,14 @@ class _VideoAppState extends State<VideoApp> {
                                                         if(_controller.value.isPlaying){
                                                             _controller.pause();
                                                             _hidePlayControl = false;
+                                                            _hideLastControl = false;
+                                                            _hidefastControl = false; 
                                                         }
                                                         else{
                                                             _controller.play();
-                                                            _hidePlayControl = true; 
+                                                            _hidePlayControl = true;
+                                                            _hideLastControl = true;
+                                                            _hidefastControl = true;  
                                                         }
                                                     
                                                     });
