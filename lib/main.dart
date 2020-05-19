@@ -24,7 +24,12 @@ class MyApp extends StatelessWidget {
         ),
         body: TorrentStreamerView()
       ),
-      theme: ThemeData(primaryColor: Colors.blue)
+      theme: ThemeData(
+        brightness: Brightness.light,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+      ),
     );
   }
 }
