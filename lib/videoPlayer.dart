@@ -7,6 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'package:screen/screen.dart';
 
+
+import 'package:path_provider/path_provider.dart';
+
 void main() => runApp(VideoApp());
 
 GlobalKey _aspectRatioKey = GlobalKey();
@@ -16,6 +19,11 @@ GlobalKey _playing = GlobalKey();
 // GlobalKey _rewind = GlobalKey();
 // GlobalKey _forward = GlobalKey();
 class VideoApp extends StatefulWidget {
+    static const routeName = '/VideoApp';
+    const VideoApp({Key key, this.srcURL, this.typeOf}) : super(key: key);
+    final String srcURL;
+    final String typeOf;
+ 
     @override
     _VideoAppState createState() => _VideoAppState();
 }
@@ -26,8 +34,9 @@ class _VideoAppState extends State<VideoApp> {
     //  _VideoAppState({
     //   this.videoInit,
     // });
-    
+  
 
+    // String srcURL = '';
     bool _hidePlayControl = true , _hidefastControl = true , _hideLastControl = true;
     bool _videoInit= false;
     bool _hideVolume = true;
@@ -48,34 +57,40 @@ class _VideoAppState extends State<VideoApp> {
     bool dragHorizontal = false;
 
     int maxVol;
+    Future<void> _initializeVideo;
+   
     // bool isPlaying = false;
      
     @override
-        void initState() {
-            super.initState();
-            // _controller = VideoPlayerController.network(
-            // 'https://i.imgur.com/I6Xdraq.mp4'
-            // ) ..initialize().then((_) {
-            //     setState((){
-            //         _videoInit = false;
-            //     });
-            //     _urlLoading();
-            // });
-            
-            var file = new File('/storage/emulated/0/Download/[Nekomoe kissaten][Azur Lane][11][1080p][CHT].mp4');
-            _controller = VideoPlayerController.file(file)
-            ..initialize().then((_) {
-                setState((){
-                    _videoInit = false;
-                });
-                // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
-              
-                _urlLoading();
+    void initState() {
+        super.initState();
+        print(widget.typeOf);
+        print(widget.srcURL);
+        if(widget.typeOf == 'network'){
+            //TEST https://i.imgur.com/I6Xdraq.mp4
+            _controller=  VideoPlayerController.network('${widget.srcURL}');
+        }
+        else if(widget.typeOf == 'file'){
+            _controller = VideoPlayerController.file(new File(widget.srcURL));
+        }
+        
+        _initializeVideo = _controller.initialize().then((_) {
+            setState((){
+                _videoInit = false;
             });
-            updateVal();
+            // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
+            
+            _urlLoading();
+        });
+        
+        
+       
+       
+        updateVal();
     }
     
-    
+ 
+
     Future<void> updateVal() async {
         
         _onBrightness = await Screen.brightness;
@@ -266,12 +281,13 @@ class _VideoAppState extends State<VideoApp> {
     Widget silderBar(){
         if(_videoInit)
         return Positioned(
-                top: _getAspectRatioHeight() * 0.85 ,
+                top: _getAspectRatioHeight() * 0.80 ,
                 height:_getAspectRatioHeight() * 0.15 ,
                 width: MediaQuery.of(context).size.width ,
                     child: Offstage(
                         offstage: _hidePlayControl,
                         child: Container(
+                            height: 45,
                             color: Colors.transparent,
                             child: Row(
                                 children: <Widget>[
@@ -493,13 +509,14 @@ class _VideoAppState extends State<VideoApp> {
     }
   @override
   Widget build(BuildContext context) {
-        
+       
         SystemChrome.setSystemUIOverlayStyle(
             SystemUiOverlayStyle(statusBarBrightness: Brightness.dark) // Or Brightness.dark
         );
         bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
         setState(() {
           _isDarkMode = isDarkMode;
+         
         });
        
         return MaterialApp(
@@ -513,7 +530,6 @@ class _VideoAppState extends State<VideoApp> {
                 children: <Widget>[
                     Container(height: 24),
                     Container(
-                        
                         child: Stack(
                         alignment: AlignmentDirectional.center,
                         children: <Widget>[
@@ -668,17 +684,25 @@ class _VideoAppState extends State<VideoApp> {
                                         
                                         //  _controller.seekTo(Duration(seconds: 0/*any second you want*/ ));
                                     },
-                                    child: 
-                                        AspectRatio(
-                                            key: _aspectRatioKey,
-                                            aspectRatio: _controller.value.aspectRatio,
-                                            child: VideoPlayer(_controller),
-                                        ),
+                                    // child:
+                                    //     DecoratedBox(
+                                    //         decoration:BoxDecoration(color: Colors.transparent),
+                                    //         child:  RotatedBox(
+                                    //             quarterTurns: 1,
+                                                child: AspectRatio(    
+                                                    key: _aspectRatioKey,
+                                                    aspectRatio: _controller.value.aspectRatio,
+                                                    child: VideoPlayer(_controller),
+                                                ),
+
+                                        //     ),
+                                        // ) ,
                                         ): Container(
                                             child: Text("看來出了一些錯誤"),
                                         ),
                             ),
                             
+                           
                             fastIcon(context, Icons.fast_forward),
                             fastIcon(context, Icons.fast_rewind),
                             silderBar(),
@@ -727,6 +751,7 @@ class _VideoAppState extends State<VideoApp> {
                             ),
                             brightness(),
                             volume(),
+                            
                         ],
                         ),
                     ),
