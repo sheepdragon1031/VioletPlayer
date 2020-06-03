@@ -684,19 +684,23 @@ class _VideoAppState extends State<VideoApp> {
                                         
                                         //  _controller.seekTo(Duration(seconds: 0/*any second you want*/ ));
                                     },
-                                    // child:
-                                    //     DecoratedBox(
-                                    //         decoration:BoxDecoration(color: Colors.transparent),
-                                    //         child:  RotatedBox(
-                                    //             quarterTurns: 1,
-                                                child: AspectRatio(    
-                                                    key: _aspectRatioKey,
-                                                    aspectRatio: _controller.value.aspectRatio,
-                                                    child: VideoPlayer(_controller),
-                                                ),
-
-                                        //     ),
-                                        // ) ,
+                                    child:
+                                        FutureBuilder(
+                                            future: _initializeVideo,
+                                            builder: (context, snapshot){
+                                                print(_controller);
+                                                print( _controller.value.aspectRatio );
+                                                return 
+                                                 Container(
+                                                    height: MediaQuery.of(context).orientation ==  Orientation.landscape ? MediaQuery.of(context).size.height - 24:MediaQuery.of(context).size.width/ _controller.value.aspectRatio  ,
+                                                    child:AspectRatio(    
+                                                        key: _aspectRatioKey,
+                                                        aspectRatio:  _controller.value.aspectRatio  ,
+                                                            child: VideoPlayer(_controller),
+                                                    ),
+                                                );
+                                            }
+                                        ),
                                         ): Container(
                                             child: Text("看來出了一些錯誤"),
                                         ),
