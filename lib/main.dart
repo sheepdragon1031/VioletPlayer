@@ -90,13 +90,13 @@ class _TorrentStreamerViewState extends State<TorrentStreamerView> {
   Map<dynamic, dynamic> status;
 
     final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  String _fileName;
+//   String _fileName;
   String _path;
   Map<String, String> _paths;
   String _extension;
   bool _loadingPath = false;
-  bool _multiPick = false;
-  FileType _pickingType = FileType.any;
+//   bool _multiPick = false;
+//   FileType _pickingType = FileType.any;
 //   TextEditingController _controller = new TextEditingController();    
   @override
   void initState() {
@@ -222,6 +222,7 @@ class _TorrentStreamerViewState extends State<TorrentStreamerView> {
   }
   void _openFileExplorer() async {
     setState(() => _loadingPath = true);
+    File file;
     try {
     // 多個檔案
     //   if (_multiPick) {
@@ -232,7 +233,7 @@ class _TorrentStreamerViewState extends State<TorrentStreamerView> {
     //             ? _extension?.replaceAll(' ', '')?.split(',')
     //             : null);
     //   } else {
-        _paths = null;
+        // String _path = null;
         _path = await FilePicker.getFilePath(
             type: FileType.video,
             allowedExtensions: (_extension?.isNotEmpty ?? false)
@@ -245,17 +246,15 @@ class _TorrentStreamerViewState extends State<TorrentStreamerView> {
     if (!mounted) return;
     setState(() {
       _loadingPath = false;
-      _fileName = _path != null
-          ? _path.split('/').last
-          : _paths != null ? _paths.keys.toString() : '...';
+    //   _fileName = _path != null
+    //       ? _path.split('/').last
+    //       : _paths != null ? _paths.keys.toString() : '...';
     });
-    print(_path);
-    // return TorrentStreamerOptions(
-    //   saveLocation: tempDir.path,
-    //   removeFilesAfterStop: false,
-    //   port: 8080
-    // );
-    Navigator.push(
+    
+    // _path = _path.toString();
+    
+    if( _path != ""){
+        Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => VideoApp(
@@ -263,6 +262,8 @@ class _TorrentStreamerViewState extends State<TorrentStreamerView> {
                 typeOf: 'file'),
         ),
     );
+    }
+    
    
   }
   Widget _buildInput(BuildContext context) {
