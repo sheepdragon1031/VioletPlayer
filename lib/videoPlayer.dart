@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -70,6 +71,7 @@ class _VideoAppState extends State<VideoApp> {
         initVolumeState();
         print(widget.typeOf);
         print(widget.srcURL);
+        print('FKOSK:KAS:LKDL');
         if(widget.typeOf == 'network'){
             //TEST https://i.imgur.com/I6Xdraq.mp4
             _controller=  VideoPlayerController.network('${widget.srcURL}');
@@ -138,7 +140,7 @@ class _VideoAppState extends State<VideoApp> {
                 // _controller.play();
             });
     }
-     _getAspectRatioHeight(){
+    double _getAspectRatioHeight(){
         if(_videoInit){
             RenderBox renderBoxRed;
             renderBoxRed = _aspectRatioKey.currentContext.findRenderObject();
@@ -147,8 +149,6 @@ class _VideoAppState extends State<VideoApp> {
         else{
             return 200;
         }
-       
-      
     }
 
     
@@ -173,10 +173,10 @@ class _VideoAppState extends State<VideoApp> {
     }
     Widget fastIcon (context , iconName){
         bool isReind = iconName.toString() == 'IconData(U+0E020)';
-        double rewind , forward;
+       
         double playWidth = MediaQuery.of(context).size.width;
-            rewind = playWidth * -0.25;
-            forward = playWidth * 0.65;
+         double rewind = playWidth * -0.25;
+        double forward = playWidth * 0.65;
         speedControl(){
             setState(() {
                 _hidePlayControl = false; 
@@ -202,15 +202,14 @@ class _VideoAppState extends State<VideoApp> {
                 //快進
                 _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() + _fastSec));
             }
-            print(_backSec);
-            
+         
         }
-       
         return Positioned(
             left: (isReind)?  rewind: forward,
             // right: (iconName.toString() == 'IconData(U+0E01F)')? MediaQuery.of(context).size.width * 0.1 : 0,
             // width: MediaQuery.of(context).size.width * 0.4,
-            // height: _videoInit? _getAspectRatioHeight() * 0.9 : 100, 
+            // height: _videoInit? _getAspectRatioHeight() * 0.9 : 100,
+            
             child:  Offstage(
                 offstage: (isReind)?_hideLastControl:_hidefastControl,
                     child:ClipRRect(
