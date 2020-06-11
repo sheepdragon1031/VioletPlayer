@@ -249,6 +249,12 @@ class _TorrentStreamerViewState extends State<TorrentStreamerView> {
           ? _path.split('/').last
           : _paths != null ? _paths.keys.toString() : '...';
     });
+    print(_path);
+    // return TorrentStreamerOptions(
+    //   saveLocation: tempDir.path,
+    //   removeFilesAfterStop: false,
+    //   port: 8080
+    // );
     Navigator.push(
         context,
         MaterialPageRoute(
