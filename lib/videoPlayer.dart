@@ -6,9 +6,11 @@ import 'package:video_player/video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'package:screen/screen.dart';
+import 'package:volume_control/volume_control.dart';
 
 
-import 'package:path_provider/path_provider.dart';
+
+// import 'package:path_provider/path_provider.dart';
 
 void main() => runApp(VideoApp());
 
@@ -42,6 +44,7 @@ class _VideoAppState extends State<VideoApp> {
     bool _hideVolume = true;
     bool _hideBrightness =true;
     bool _isDarkMode = false;
+    bool _isPortrait = true;
     int _seconds = 10;
     int _fastSec = 0;
     int _backSec = 0;
@@ -50,7 +53,7 @@ class _VideoAppState extends State<VideoApp> {
     double _onVolume = 0;
     double _brightness = 0;
     double _onBrightness =  0;
-    
+
     VideoPlayerController _controller;
     Offset dragStart;
     Offset dragDown;
@@ -64,6 +67,7 @@ class _VideoAppState extends State<VideoApp> {
     @override
     void initState() {
         super.initState();
+        initVolumeState();
         print(widget.typeOf);
         print(widget.srcURL);
         if(widget.typeOf == 'network'){
@@ -71,13 +75,15 @@ class _VideoAppState extends State<VideoApp> {
             _controller=  VideoPlayerController.network('${widget.srcURL}');
         }
         else if(widget.typeOf == 'file'){
-            _controller = VideoPlayerController.file(new File(widget.srcURL));
+            _controller = VideoPlayerController.file(File(widget.srcURL));
         }
         
         _initializeVideo = _controller.initialize().then((_) {
             setState((){
                 _videoInit = false;
+                
             });
+             _controller.setVolume(1.0);
             // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
             
             _urlLoading();
@@ -89,7 +95,13 @@ class _VideoAppState extends State<VideoApp> {
         updateVal();
     }
     
- 
+    Future<void> initVolumeState() async {
+    if (!mounted) return;
+        //read the current volume
+        _volume = await VolumeControl.volume;
+        setState(() {
+        });
+     }
 
     Future<void> updateVal() async {
         
@@ -161,9 +173,10 @@ class _VideoAppState extends State<VideoApp> {
     }
     Widget fastIcon (context , iconName){
         bool isReind = iconName.toString() == 'IconData(U+0E020)';
-        double rewind = MediaQuery.of(context).size.width * -0.1;
-        double forward = MediaQuery.of(context).size.width * 0.6;
-      
+        double rewind , forward;
+        double playWidth = MediaQuery.of(context).size.width;
+            rewind = playWidth * -0.25;
+            forward = playWidth * 0.65;
         speedControl(){
             setState(() {
                 _hidePlayControl = false; 
@@ -200,30 +213,31 @@ class _VideoAppState extends State<VideoApp> {
             // height: _videoInit? _getAspectRatioHeight() * 0.9 : 100, 
             child:  Offstage(
                 offstage: (isReind)?_hideLastControl:_hidefastControl,
-               
-                    child:Container(
-                        width: MediaQuery.of(context).size.width * 0.5,
-                        height: _videoInit? _getAspectRatioHeight() * 0.8 : 100, 
-                        child:  
-                        Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                                        ClipRRect(
-                                        borderRadius: BorderRadius.circular(100.0),
-                                            child: Material(
-                                            color: Colors.transparent, //透明
-                                            borderRadius: BorderRadius.all(Radius.circular(100.0)),
-                                            child:
-                                                InkWell(
-                                                    splashColor: Colors.black54,
-                                                    onTap: (){
-                                                        speedControl();
-                                                    },
-                                                    child:Container(
+                    child:ClipRRect(
+                    borderRadius: BorderRadius.circular(_getAspectRatioHeight()),
+                        child: Material(
+                        color: Colors.transparent, //透明
+                        borderRadius: BorderRadius.all(Radius.circular(100.0)),
+                        child:
+                            InkWell(
+                                splashColor: Colors.black54,
+                                onTap: (){
+                                    speedControl();
+                                },
+                                child:Container(
+
+                                    width: _isPortrait? playWidth * 0.6 :playWidth * 0.6,
+                                    height: _videoInit? _getAspectRatioHeight() : 100, 
+                                    child:  
+                                    Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: <Widget>[
+                                                    Container(
+                                                        margin: isReind?EdgeInsets.only(left: playWidth * .2):EdgeInsets.only(right: playWidth * .2),
                                                         height: 58,
                                                         width: 58,
                                                         child:Column(
-                                                             mainAxisAlignment: MainAxisAlignment.end,
+                                                            mainAxisAlignment: MainAxisAlignment.end,
                                                         children: <Widget>[
                                                             
                                                             Stack(
@@ -234,7 +248,7 @@ class _VideoAppState extends State<VideoApp> {
                                                                         left: (isReind)?-2:0,
                                                                         child:  Icon(
                                                                             (isReind)?Icons.fast_rewind:Icons.fast_forward,
-                                                                            size: 32,
+                                                                            size:  32,
                                                                             color: Colors.black54,
                                                                         ),),
                                                                     Icon(
@@ -267,21 +281,21 @@ class _VideoAppState extends State<VideoApp> {
                                                                 fontSize: 10.0,
                                                                 color: Colors.white,
                                                                 ))
-                                                        ]
-                                                    ))
-                                                )
-                                            )
+                                                    ]
+                                                ))
+                                            ],
                                         ),
-                            ],
-                        ),
-                )
+                                )
+                        )
+                    )
+                ),
             ),
         );
     }
     Widget silderBar(){
         if(_videoInit)
         return Positioned(
-                top: _getAspectRatioHeight() * 0.80 ,
+                top: _isPortrait?_getAspectRatioHeight() * 0.85: _getAspectRatioHeight() * 0.875 ,
                 height:_getAspectRatioHeight() * 0.15 ,
                 width: MediaQuery.of(context).size.width ,
                     child: Offstage(
@@ -302,7 +316,7 @@ class _VideoAppState extends State<VideoApp> {
                                             ),
                                     ),
                                     Expanded(
-                                        flex: 8,  
+                                        flex: _isPortrait?8:16,  
                                         child:
                                             SliderTheme(
                                                 data: SliderTheme.of(context).copyWith(
@@ -510,25 +524,33 @@ class _VideoAppState extends State<VideoApp> {
   @override
   Widget build(BuildContext context) {
        
+       
         SystemChrome.setSystemUIOverlayStyle(
             SystemUiOverlayStyle(statusBarBrightness: Brightness.dark) // Or Brightness.dark
         );
         bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
         setState(() {
-          _isDarkMode = isDarkMode;
-         
+            _isDarkMode = isDarkMode;
+            _isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
         });
-       
+        if(!_isPortrait){
+            SystemChrome.setEnabledSystemUIOverlays([]);
+        }
+        else{
+            SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+        }
+
         return MaterialApp(
             darkTheme: ThemeData(
                 brightness: Brightness.dark,
             ),
             title: 'Video Demo',
             home: Scaffold(
+            resizeToAvoidBottomPadding: false,
             // appBar: AppBar(),
             body: Column(
                 children: <Widget>[
-                    Container(height: 24),
+                    _isPortrait?Container(height: 24):Container(),
                     Container(
                         child: Stack(
                         alignment: AlignmentDirectional.center,
@@ -612,7 +634,8 @@ class _VideoAppState extends State<VideoApp> {
                                                 if(!_hideBrightness)
                                                      Screen.setBrightness(brightness * 0.01);
                                                 if(!_hideVolume)
-                                                     _controller.setVolume(volume * 0.01);
+                                                    VolumeControl.setVolume(volume * 0.01);
+                                                    //  _controller.setVolume(volume * 0.01);
                                                     
                                             }
                                             if(dx.abs()>10){
@@ -688,11 +711,11 @@ class _VideoAppState extends State<VideoApp> {
                                         FutureBuilder(
                                             future: _initializeVideo,
                                             builder: (context, snapshot){
-                                                print(_controller);
-                                                print( _controller.value.aspectRatio );
+                                                // print(_controller);
+                                                // print( _controller.value.aspectRatio );
                                                 return 
                                                  Container(
-                                                    height: MediaQuery.of(context).orientation ==  Orientation.landscape ? MediaQuery.of(context).size.height - 24:MediaQuery.of(context).size.width/ _controller.value.aspectRatio  ,
+                                                    height: _isPortrait ? MediaQuery.of(context).size.width / _controller.value.aspectRatio : MediaQuery.of(context).size.height  ,
                                                     child:AspectRatio(    
                                                         key: _aspectRatioKey,
                                                         aspectRatio:  _controller.value.aspectRatio  ,
@@ -755,11 +778,9 @@ class _VideoAppState extends State<VideoApp> {
                             ),
                             brightness(),
                             volume(),
-                            
                         ],
                         ),
                     ),
-                    
                 ],
             )
         ),
