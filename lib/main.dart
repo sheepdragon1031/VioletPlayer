@@ -222,7 +222,7 @@ class _TorrentStreamerViewState extends State<TorrentStreamerView> {
   }
   void _openFileExplorer() async {
     setState(() => _loadingPath = true);
-    File file;
+    
     try {
     // 多個檔案
     //   if (_multiPick) {

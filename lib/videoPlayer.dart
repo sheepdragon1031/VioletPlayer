@@ -71,7 +71,7 @@ class _VideoAppState extends State<VideoApp> {
         initVolumeState();
         print(widget.typeOf);
         print(widget.srcURL);
-        print('FKOSK:KAS:LKDL');
+       
         if(widget.typeOf == 'network'){
             //TEST https://i.imgur.com/I6Xdraq.mp4
             _controller=  VideoPlayerController.network('${widget.srcURL}');
@@ -545,6 +545,7 @@ class _VideoAppState extends State<VideoApp> {
             ),
             title: 'Video Demo',
             home: Scaffold(
+            backgroundColor: _isPortrait? null: Colors.black,
             resizeToAvoidBottomPadding: false,
             // appBar: AppBar(),
             body: Column(
