@@ -88,30 +88,27 @@ class _VideoAppState extends State<VideoApp> {
              _controller.setVolume(1.0);
             // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
             
-            _urlLoading();
+           _urlLoading();
         });
-        
-        
-       
-       
-        updateVal();
+        initBrightnessState();
     }
     
     Future<void> initVolumeState() async {
     if (!mounted) return;
         //read the current volume
-        _volume = await VolumeControl.volume;
+        double volume = await VolumeControl.volume;
         setState(() {
+            _volume = volume * 100;
         });
      }
 
-    Future<void> updateVal() async {
+    Future<void> initBrightnessState() async {
         
         _onBrightness = await Screen.brightness;
        
         setState(() {
-            _brightness = _onBrightness;
-            _volume = _controller.value.volume * 100;
+            _brightness = _onBrightness * 100;
+            // _volume = _controller.value.volume * 100;
         });
         
     }
@@ -139,15 +136,15 @@ class _VideoAppState extends State<VideoApp> {
                 //   _videoError = false;`
                 // _controller.play();
             });
-    }
+    } 
     double _getAspectRatioHeight(){
-        if(_videoInit){
+        if(_aspectRatioKey.currentContext != null){
             RenderBox renderBoxRed;
             renderBoxRed = _aspectRatioKey.currentContext.findRenderObject();
             return renderBoxRed.size.height;
         }
         else{
-            return 200;
+            return 430;
         }
     }
 
@@ -175,7 +172,7 @@ class _VideoAppState extends State<VideoApp> {
         bool isReind = iconName.toString() == 'IconData(U+0E020)';
        
         double playWidth = MediaQuery.of(context).size.width;
-         double rewind = playWidth * -0.25;
+        double rewind = playWidth * -0.25;
         double forward = playWidth * 0.65;
         speedControl(){
             setState(() {
@@ -363,162 +360,179 @@ class _VideoAppState extends State<VideoApp> {
     Widget brightness(){
        
         return 
-                Align(
-                    alignment: Alignment.center,
-                    child:
-                    Offstage(
-                        offstage: _hideBrightness,
-                        child: SleekCircularSlider(
-                            min: 0,
-                            max: 100,
-                            initialValue: _brightness,
-                            
-                            onChange: (double value){
-                                // print(value);
-                            },
-                            innerWidget: (double value) {
-                                final roundedValue = value.ceil().toInt().toString();
-                                return 
-                                Container(
-                                    margin: EdgeInsets.all(9),
-                                    child:ClipRRect(
-                                        borderRadius: BorderRadius.circular(100.0),
-                                        child:Container(
-                                                // color: _isDarkMode ? Colors.black38: Colors.white70,
-                                                color: _brightness < 20?
-                                                    Colors.black54:
-                                                    _brightness < 40?
-                                                    Colors.black38:
-                                                    _brightness < 70?
-                                                    Colors.black26:
-                                                    Colors.black12,
-                                                child: Column(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    children: <Widget>[
-                                                        Icon(
-                                                            Icons.settings_brightness,
-                                                            size: 40,
-                                                        ),
-                                                        Text('$roundedValue%',
-                                                            style: TextStyle(
-                                                                fontWeight: FontWeight.w800,
-                                                                fontSize: 20,
-                                                            )
-                                                        ),
-                                                    ],
-                                                ),
+            Align(
+                alignment: Alignment.center,
+                child:
+                Offstage(
+                    offstage: _hideBrightness,
+                    child: SleekCircularSlider(
+                        min: 0,
+                        max: 100,
+                        initialValue: _brightness,
+                        onChange: (double value){
+                            // print(value);
+                        },
+                        innerWidget: (double value) {
+                            final roundedValue = value.ceil().toInt().toString();
+                            return 
+                            Container(
+                                margin: EdgeInsets.all(9),
+                                child:ClipRRect(
+                                    borderRadius: BorderRadius.circular(100.0),
+                                    child:Container(
+                                            // color: _isDarkMode ? Colors.black38: Colors.white70,
+                                            color: _brightness < 20?
+                                                Colors.black54:
+                                                _brightness < 40?
+                                                Colors.black38:
+                                                _brightness < 70?
+                                                Colors.black26:
+                                                Colors.black12,
+                                            child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: <Widget>[
+                                                    Icon(
+                                                        Icons.settings_brightness,
+                                                        size: 40,
+                                                    ),
+                                                    Text('$roundedValue%',
+                                                        style: TextStyle(
+                                                            fontWeight: FontWeight.w800,
+                                                            fontSize: 20,
+                                                        )
+                                                    ),
+                                                ],
                                             ),
                                         ),
-                                );
-                            },
-                            appearance: CircularSliderAppearance(
-                                // counterClockwise: true,
-                                spinnerDuration: 100,
-                                customColors: CustomSliderColors(
-                                    trackColor: Color(0xffffecd2),
-                                    progressBarColors: [
-                                        Color(0xfff6d365),
-                                        Color(0xfffda085),
-                                    ],
-                                    // shadowColor: Colors.black38,
-                                ),
-                                customWidths: CustomSliderWidths(
-                                    trackWidth: 2,
-                                    progressBarWidth: 8,
-                                    shadowWidth: 10),
-                                size: 100,
-                                startAngle: 150,
-                                angleRange: 360,
-                                
+                                    ),
+                            );
+                        },
+                        appearance: CircularSliderAppearance(
+                            // counterClockwise: true,
+                            spinnerDuration: 100,
+                            customColors: CustomSliderColors(
+                                trackColor: Color(0xffffecd2),
+                                progressBarColors: [
+                                    Color(0xfff6d365),
+                                    Color(0xfffda085),
+                                ],
+                                // shadowColor: Colors.black38,
                             ),
-                        )
-                        
-                       
-                    ) 
-                );
+                            customWidths: CustomSliderWidths(
+                                trackWidth: 2,
+                                progressBarWidth: 8,
+                                shadowWidth: 10),
+                            size: 100,
+                            startAngle: 150,
+                            angleRange: 360,
+                            
+                        ),
+                    )
+                    
+                    
+                ) 
+            );
                 
         
     }
     Widget volume(){
-      
         return 
-                Align(
-                    alignment: Alignment.center,
-                    child:
-                    Offstage(
-                        offstage: _hideVolume,
-                        child: SleekCircularSlider(
-                            min: 0,
-                            max: 100,
-                            initialValue: _volume,
-                            
-                            onChange: (double value){
-                                // print(value);
-                            },
-                            innerWidget: (double value) {
-                                final roundedValue = value.ceil().toInt().toString();
-                                return 
-                                Container(
-                                    margin: EdgeInsets.all(9),
-                                    child:ClipRRect(
-                                        borderRadius: BorderRadius.circular(100.0),
-                                        child:Container(
-                                                color: _isDarkMode ? Colors.black38: Colors.white70,
-                                                child: Column(
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    children: <Widget>[
-                                                        Icon(
-                                                            _volume == 0?
-                                                            Icons.volume_off:
-                                                            _volume < 20?
-                                                            Icons.volume_mute:
-                                                            _volume < 70?
-                                                            Icons.volume_down:
-                                                            Icons.volume_up,
-                                                            size: 40,
-                                                        ),
-                                                        Text('$roundedValue%',
-                                                            style: TextStyle(
-                                                                fontWeight: FontWeight.w800,
-                                                                fontSize: 20,
-                                                            )
-                                                        ),
-                                                    ],
-                                                ),
+            Align(
+                alignment: Alignment.center,
+                child:
+                Offstage(
+                    offstage: _hideVolume,
+                    child: SleekCircularSlider(
+                        min: 0,
+                        max: 100,
+                        initialValue: _volume,
+                        onChange: (double value){
+                            // print(value);
+                        },
+                        innerWidget: (double value) {
+                            final roundedValue = value.ceil().toInt().toString();
+                            return 
+                            Container(
+                                margin: EdgeInsets.all(9),
+                                child:ClipRRect(
+                                    borderRadius: BorderRadius.circular(100.0),
+                                    child:Container(
+                                            color: _isDarkMode ? Colors.black38: Colors.white70,
+                                            child: Column(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: <Widget>[
+                                                    Icon(
+                                                        _volume == 0?
+                                                        Icons.volume_off:
+                                                        _volume < 20?
+                                                        Icons.volume_mute:
+                                                        _volume < 70?
+                                                        Icons.volume_down:
+                                                        Icons.volume_up,
+                                                        size: 40,
+                                                    ),
+                                                    Text('$roundedValue%',
+                                                        style: TextStyle(
+                                                            fontWeight: FontWeight.w800,
+                                                            fontSize: 20,
+                                                        )
+                                                    ),
+                                                ],
                                             ),
                                         ),
-                                );
+                                    ),
+                            );
+                        },
+                        appearance: CircularSliderAppearance(
+                            counterClockwise: true,
+                            spinnerDuration: 100,
+                            customColors: CustomSliderColors(
+                                trackColor: Color(0xffc7dffa),
+                                // gradientStartAngle : 0,
+                                // gradientEndAngle : 180,
+                                progressBarColors: [
+                                    Color(0xffe0c3fc),
+                                    Color(0xff8ec5fc),
+                                    Color(0xff38f9d7),
+                                ],
+                                // shadowColor: Colors.black38,
+                            ),
+                            customWidths: CustomSliderWidths(
+                                trackWidth: 2,
+                                progressBarWidth: 8,
+                                shadowWidth: 10),
+                            size: 100,
+                            startAngle: 50,
+                            angleRange: 360,
+                            
+                        ),
+                    )
+                    
+                    
+                ) 
+            );
+            
+        
+    }
+    Widget backButton(){
+        return Positioned(
+                top: 0 ,
+                left: 0 ,
+                    // alignment: Alignment(0, 24),
+                    child: Offstage(
+                        offstage: _hidePlayControl,
+                        child:IconButton(
+                            // iconSize: 12,
+                            onPressed: () {
+                                Navigator.pop(context);
                             },
-                            appearance: CircularSliderAppearance(
-                                counterClockwise: true,
-                                spinnerDuration: 100,
-                                customColors: CustomSliderColors(
-                                    trackColor: Color(0xffc7dffa),
-                                    // gradientStartAngle : 0,
-                                    // gradientEndAngle : 180,
-                                    progressBarColors: [
-                                        Color(0xffe0c3fc),
-                                        Color(0xff8ec5fc),
-                                        Color(0xff38f9d7),
-                                    ],
-                                    // shadowColor: Colors.black38,
-                                ),
-                                customWidths: CustomSliderWidths(
-                                    trackWidth: 2,
-                                    progressBarWidth: 8,
-                                    shadowWidth: 10),
-                                size: 100,
-                                startAngle: 50,
-                                angleRange: 360,
-                                
+                            icon: Icon(
+                                Icons.arrow_back,
+                                size: 18,
                             ),
                         )
-                        
-                       
-                    ) 
+                    ), 
                 );
-                
-        
     }
   @override
   Widget build(BuildContext context) {
@@ -538,7 +552,7 @@ class _VideoAppState extends State<VideoApp> {
         else{
             SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
         }
-
+        
         return MaterialApp(
             darkTheme: ThemeData(
                 brightness: Brightness.dark,
@@ -551,10 +565,12 @@ class _VideoAppState extends State<VideoApp> {
             body: Column(
                 children: <Widget>[
                     _isPortrait?Container(height: 24):Container(),
+                    
                     Container(
                         child: Stack(
                         alignment: AlignmentDirectional.center,
                         children: <Widget>[
+
                             Container(
                                 key: _playerKey,
                                 child:
@@ -718,7 +734,7 @@ class _VideoAppState extends State<VideoApp> {
                                                     height: _isPortrait ? MediaQuery.of(context).size.width / _controller.value.aspectRatio : MediaQuery.of(context).size.height  ,
                                                     child:AspectRatio(    
                                                         key: _aspectRatioKey,
-                                                        aspectRatio:  _controller.value.aspectRatio  ,
+                                                        aspectRatio:  _controller.value.aspectRatio,
                                                             child: VideoPlayer(_controller),
                                                     ),
                                                 );
@@ -778,9 +794,13 @@ class _VideoAppState extends State<VideoApp> {
                             ),
                             brightness(),
                             volume(),
-                        ],
+                            backButton(),
+                            ],
                         ),
                     ),
+                   ExpansionPanelList(
+                       
+                   ),
                 ],
             )
         ),
