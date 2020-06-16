@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_torrent_streamer/flutter_torrent_streamer.dart';  
 import 'videoPlayer.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
 
 // import 'after_layout.dart';
 void main() async {
@@ -172,14 +174,33 @@ class _TorrentStreamerViewState extends State<TorrentStreamerView> {
 //     );
 //   }
   Future<void> _showList(BuildContext context) async {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => VideoApp(
-                srcURL: httpsURL,
-                typeOf: 'network'),
-        ),
-    );
+      RegExp regExp = new RegExp(
+        r"^(http|https):*",
+        caseSensitive: false,
+        multiLine: false,
+        );
+    if(regExp.hasMatch(httpsURL)){
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => VideoApp(
+                    srcURL: httpsURL,
+                    typeOf: 'network'),
+            ),
+        );
+    }
+    else{
+        Fluttertoast.showToast(
+            msg: '不正確的網址:$httpsURL',
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 12.0
+        );
+    }
+    
   }
 
 //   Future<void> _startDownload() async {
@@ -255,13 +276,13 @@ class _TorrentStreamerViewState extends State<TorrentStreamerView> {
     
     if( _path != ""){
         Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => VideoApp(
-                srcURL: _path,
-                typeOf: 'file'),
-        ),
-    );
+            context,
+            MaterialPageRoute(
+                builder: (context) => VideoApp(
+                    srcURL: _path,
+                    typeOf: 'file'),
+            ),
+        );
     }
     
    
