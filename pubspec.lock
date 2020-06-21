@@ -97,6 +97,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_open_chinese_convert:
+    dependency: "direct dev"
+    description:
+      name: flutter_open_chinese_convert
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.1"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
