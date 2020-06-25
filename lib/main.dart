@@ -333,7 +333,7 @@ class _TorrentStreamerViewState extends State<TorrentStreamerView> {
             // MySpacer(),
             RaisedButton(
               onPressed: () => _openFileExplorer(),
-              child: Text("Open file picker"),
+              child: Text("Open filePicker"),
             ),
             MySpacer(),
             RaisedButton(
