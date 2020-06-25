@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:ffi';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
@@ -8,8 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'package:screen/screen.dart';
 import 'package:volume_control/volume_control.dart';
+import './Components/wiki.dart';
 
 
+import 'dart:convert' show Base64Decoder, base64, base64Decode, base64Encode, utf8;
+import 'package:image/image.dart' as ImageProcess;
 
 // import 'package:path_provider/path_provider.dart';
 
@@ -46,6 +49,8 @@ class _VideoAppState extends State<VideoApp> {
     bool _hideBrightness =true;
     bool _isDarkMode = false;
     bool _isPortrait = true;
+    bool _titleImg = false;
+    bool _wiki = false;
     int _seconds = 10;
     int _fastSec = 0;
     int _backSec = 0;
@@ -62,16 +67,22 @@ class _VideoAppState extends State<VideoApp> {
 
     int maxVol;
     Future<void> _initializeVideo;
-   
+    String titleText = '未知名稱',
+     titleImg = '',
+     titleOrigin = '無取得資訊',
+     originContent = '',
+     introduction = '',
+     headline = '';
     // bool isPlaying = false;
-     
+    Map<String, dynamic> wiki;
     @override
     void initState() {
         super.initState();
         initVolumeState();
         print(widget.typeOf);
         print(widget.srcURL);
-       
+        
+        
         if(widget.typeOf == 'network'){
             //TEST https://i.imgur.com/I6Xdraq.mp4
             _controller=  VideoPlayerController.network('${widget.srcURL}');
@@ -91,7 +102,55 @@ class _VideoAppState extends State<VideoApp> {
            _urlLoading();
         });
         initBrightnessState();
+        if(widget.typeOf == 'file')
+            animeName();
+        
+        
+        // searchMoegirl();
     }
+    Future<void> animeName() async {
+        try {
+            final result = await InternetAddress.lookup('google.com');
+            if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+                
+             
+                String fileName = widget.srcURL.split('/').last;
+                
+                String name = await Moegirl().getFileName(fileName);
+                
+               
+                
+                if(name != ''){
+                    var posts = await Moegirl().googlePosts(name).then((value) => value);
+                    
+                    var wPage = await Moegirl().getWikiPage(posts['title']);
+                   
+                    // String animeName = await Moegirl().getKeyWord('azur lane');
+                    var content = await Moegirl().wikiGetPage(posts['title'], wPage['meogrl']);
+                    // print());
+                    String headLine = await Moegirl().getNum(fileName , wPage['listWords']);
+                    print(headLine);
+                    this.setState(() {
+                        titleText = posts['title'];
+                        titleOrigin = posts['origin'];
+                        originContent = posts['originContent'];
+                        // if(posts['titleImg'] == ''){
+                        //     _titleImg = true;
+                        //     titleImg = posts['titleImg'];
+                        // }
+                        if(content['wikiImg'] != ''){
+                            _wiki = true;
+                            wiki = content;
+                            headline = headLine;
+                        }
+                    });
+                }
+            }
+        } on SocketException catch (_) {
+            print('not connected');
+        }
+    }
+  
     
     Future<void> initVolumeState() async {
     if (!mounted) return;
@@ -103,9 +162,7 @@ class _VideoAppState extends State<VideoApp> {
      }
 
     Future<void> initBrightnessState() async {
-        
         _onBrightness = await Screen.brightness;
-       
         setState(() {
             _brightness = _onBrightness * 100;
             // _volume = _controller.value.volume * 100;
@@ -133,8 +190,8 @@ class _VideoAppState extends State<VideoApp> {
             await _controller.initialize();
             setState(() {
                 _videoInit = true;
-                //   _videoError = false;`
-                // _controller.play();
+                //   _videoError = false;
+                _controller.play();
             });
     } 
     double _getAspectRatioHeight(){
@@ -144,7 +201,7 @@ class _VideoAppState extends State<VideoApp> {
             return renderBoxRed.size.height;
         }
         else{
-            return 430;
+            return 400;
         }
     }
 
@@ -172,12 +229,9 @@ class _VideoAppState extends State<VideoApp> {
         bool isReind = iconName.toString() == 'IconData(U+0E020)';
        
         double playWidth = MediaQuery.of(context).size.width;
-        double rewind = playWidth * -0.25;
-        double forward = playWidth * 0.65;
+        double rewind = playWidth * -0.285;
+        double forward = playWidth * 0.685;
         speedControl(){
-            setState(() {
-                _hidePlayControl = false; 
-            });
             
             if(isReind){
                 
@@ -199,7 +253,19 @@ class _VideoAppState extends State<VideoApp> {
                 //快進
                 _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() + _fastSec));
             }
-         
+            setState(() {
+                _hidePlayControl = false; 
+            });
+            if(_controller.value.isPlaying){
+                Timer(Duration(seconds: 2), () {
+                    setState(() {
+                        _hidePlayControl = true; 
+                        _hideLastControl = true;
+                        _hidefastControl = true; 
+                    });
+                });    
+            }
+            
         }
         return Positioned(
             left: (isReind)?  rewind: forward,
@@ -208,7 +274,7 @@ class _VideoAppState extends State<VideoApp> {
             // height: _videoInit? _getAspectRatioHeight() * 0.9 : 100,
             
             child:  Offstage(
-                offstage: (isReind)?_hideLastControl:_hidefastControl,
+                offstage: (isReind)? _hideLastControl : _hidefastControl,
                     child:ClipRRect(
                     borderRadius: BorderRadius.circular(_getAspectRatioHeight()),
                         child: Material(
@@ -229,7 +295,7 @@ class _VideoAppState extends State<VideoApp> {
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: <Widget>[
                                                     Container(
-                                                        margin: isReind?EdgeInsets.only(left: playWidth * .2):EdgeInsets.only(right: playWidth * .2),
+                                                        margin: isReind?EdgeInsets.only(left: playWidth * .3):EdgeInsets.only(right: playWidth * .3),
                                                         height: 58,
                                                         width: 58,
                                                         child:Column(
@@ -239,17 +305,10 @@ class _VideoAppState extends State<VideoApp> {
                                                             Stack(
                                                                 alignment: Alignment(0, 102),
                                                                 children: <Widget>[
-                                                                    Positioned(
-                                                                        top: -1,
-                                                                        left: (isReind)?-2:0,
-                                                                        child:  Icon(
-                                                                            (isReind)?Icons.fast_rewind:Icons.fast_forward,
-                                                                            size:  32,
-                                                                            color: Colors.black54,
-                                                                        ),),
                                                                     Icon(
                                                                         (isReind)?Icons.fast_rewind:Icons.fast_forward,
                                                                         size: 30,
+                                                                        color: Colors.white,
                                                                     ),
                                                                 ],
                                                             ),
@@ -291,9 +350,10 @@ class _VideoAppState extends State<VideoApp> {
     Widget silderBar(){
         if(_videoInit)
         return Positioned(
-                top: _isPortrait?_getAspectRatioHeight() * 0.85: _getAspectRatioHeight() * 0.875 ,
-                height:_getAspectRatioHeight() * 0.15 ,
-                width: MediaQuery.of(context).size.width ,
+                bottom: _isPortrait? 0 : 0,
+                left: 0,
+                height: _isPortrait? _getAspectRatioHeight() * 0.15 : 48,
+                width:  _isPortrait? MediaQuery.of(context).size.width - 32 : MediaQuery.of(context).size.width - 41,
                     child: Offstage(
                         offstage: _hidePlayControl,
                         child: Container(
@@ -516,24 +576,106 @@ class _VideoAppState extends State<VideoApp> {
     }
     Widget backButton(){
         return Positioned(
-                top: 0 ,
-                left: 0 ,
-                    // alignment: Alignment(0, 24),
-                    child: Offstage(
-                        offstage: _hidePlayControl,
-                        child:IconButton(
-                            // iconSize: 12,
-                            onPressed: () {
+            top: _isPortrait? -5 : 0 ,
+            left: _isPortrait? -5 : 0 ,
+                // alignment: Alignment(0, 24),
+                child: Offstage(
+                    offstage: _hidePlayControl,
+                    child:IconButton(
+                        // iconSize: 12,
+                        onPressed: () {
+                            if(_isPortrait){
                                 Navigator.pop(context);
-                            },
-                            icon: Icon(
-                                Icons.arrow_back,
-                                size: 18,
-                            ),
-                        )
-                    ), 
-                );
+                            }
+                            else{
+                                SystemChrome.setPreferredOrientations([
+                                    DeviceOrientation.portraitUp,
+                                    DeviceOrientation.landscapeRight,
+                                    DeviceOrientation.landscapeLeft,
+                                ]);
+                            }
+                        },
+                        icon: Icon(
+                            Icons.arrow_back,
+                            size: 18,
+                        ),
+                    )
+                ), 
+            );
     }
+    Widget fullButton(){
+        return Positioned(
+            bottom: _isPortrait? -8 : 0,
+            right:  _isPortrait? -8:  0,
+                // alignment: Alignment(0, 24),
+                child: Offstage(
+                    offstage: _hidePlayControl,
+                    child:IconButton(
+                        
+                        iconSize: 12,
+                        onPressed: () {
+                            if(_isPortrait){
+                                 SystemChrome.setPreferredOrientations([
+                                    DeviceOrientation.landscapeRight,
+                                    DeviceOrientation.landscapeLeft,
+                                ]);
+                            }
+                            else{
+                                SystemChrome.setPreferredOrientations([
+                                    DeviceOrientation.portraitUp,
+                                    DeviceOrientation.landscapeRight,
+                                    DeviceOrientation.landscapeLeft,
+                                ]);
+                            }
+                        },
+                        icon: Icon(
+                            _isPortrait ? Icons.fullscreen : Icons.fullscreen_exit,
+                            size: 24,
+                        ),
+                    )
+                ), 
+            );
+    }
+    
+    Widget wikiCards(Map<String, dynamic> strings)
+    {
+        return Column(
+            children: <Widget>[
+               for(var i = 0; i < strings['wikiList'].length; i++)
+                    Card(
+                        clipBehavior: Clip.antiAliasWithSaveLayer,
+                        child: Column(
+                            children: <Widget>[
+                                if(i == 0)
+                                    ClipRRect(
+                                            borderRadius: BorderRadius.vertical(top: Radius.circular(4.0)),
+                                            child: Image.network(strings['wikiImg']),
+                                    ),
+                                    ListTile(
+                                        title:
+                                            Padding(
+                                                padding: EdgeInsets.only( top: 16),
+                                                child: Text(strings['wikiList'][i]),
+                                            ),
+                                        subtitle:
+                                            Padding(
+                                                padding: EdgeInsets.symmetric( vertical: 16),
+                                                child: Text(strings['wikiContent'][i]),
+                                            )
+                                ),
+                            ],
+                        ),
+                    )                              
+            ]
+        );
+        
+          
+    }
+    Image imageFromBase64String(String base64String) {
+     
+        return Image.memory(base64Decode(base64String));
+    }
+
   @override
   Widget build(BuildContext context) {
        
@@ -699,10 +841,8 @@ class _VideoAppState extends State<VideoApp> {
                                       
                                        setState(() {
                                             Timer(Duration(seconds: 2), () {
-                                               
                                                     _fastSec = 0;
                                                     _backSec = 0;
-                                               
                                             });
                                        
                                             _hidePlayControl = false;
@@ -728,7 +868,7 @@ class _VideoAppState extends State<VideoApp> {
                                             future: _initializeVideo,
                                             builder: (context, snapshot){
                                                 // print(_controller);
-                                                // print( _controller.value.aspectRatio );
+                                                print( _controller.value );
                                                 return 
                                                  Container(
                                                     height: _isPortrait ? MediaQuery.of(context).size.width / _controller.value.aspectRatio : MediaQuery.of(context).size.height  ,
@@ -763,7 +903,7 @@ class _VideoAppState extends State<VideoApp> {
                                             borderRadius: BorderRadius.all(Radius.circular(100.0)),
                                             // shape: CircleBorder(),
                                             child:IconButton(
-                                                iconSize: 55,
+                                                iconSize: 52,
                                                 key: _playing,
                                                 onPressed: () {
                                                     setState(() {
@@ -784,7 +924,7 @@ class _VideoAppState extends State<VideoApp> {
                                                 },
                                                 icon: Icon(
                                                     _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                                                    size: 40,
+                                                    size: 42,
                                                 ),
                                             ),
                                             
@@ -795,12 +935,70 @@ class _VideoAppState extends State<VideoApp> {
                             brightness(),
                             volume(),
                             backButton(),
+                            fullButton(),
                             ],
                         ),
                     ),
-                   ExpansionPanelList(
-                       
-                   ),
+                     _isPortrait? SizedBox(
+                       height: MediaQuery.of(context).size.height - _getAspectRatioHeight() -24,
+                       child: ListView(
+                           children: <Widget>[
+                                ExpansionTile(
+                                    title: Text(widget.typeOf == 'network'? '網路影片':'影片資訊'),
+                                    // backgroundColor: Colors.white,
+                                    initiallyExpanded: true, // 是否默认展开
+                                    children: <Widget>[
+                                        ListTile(
+                                            title:Padding(
+                                                padding: EdgeInsets.only( top: 8),
+                                                child: 
+                                                    Text(widget.typeOf == 'network'?
+                                                    '網路影片': titleText + ' ' + headline)),
+                                            subtitle:Padding(
+                                            padding: EdgeInsets.symmetric( vertical: 8),
+                                            child: 
+                                               Text(widget.srcURL.split('/').last))
+                                        ),
+                                    ],
+                                ),
+                                ExpansionTile(
+                                    title: Text(titleOrigin),
+                                    initiallyExpanded: false, 
+                                    children: <Widget>[
+                                          Padding(
+                                            padding: EdgeInsets.all(8),
+                                            child:
+                                            Card(
+                                                clipBehavior: Clip.antiAliasWithSaveLayer,
+                                                child: Column(
+                                                children: <Widget>[
+                                                    Padding(
+                                                        padding: EdgeInsets.symmetric(vertical: 16),
+                                                        child: ListTile(
+                                                        // title:Text('原作分類'),
+                                                        subtitle:Text(originContent),
+                                                        ),
+                                                    ) 
+                                                ])
+                                            ),
+                                        ),
+                                        
+                                    ],
+                                ),
+                                ExpansionTile(
+                                    title: Text('動畫資訊'),
+                                    initiallyExpanded: false, // 是否默认展开
+                                    children: <Widget>[
+                                        Padding(
+                                            padding: EdgeInsets.all(8),
+                                            child:  _wiki? wikiCards(wiki): Container(),
+                                        ),
+                                        
+                                    ],
+                                )
+                           ],
+                       ),
+                    ) : Container()
                 ],
             )
         ),
