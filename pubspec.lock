@@ -111,6 +111,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_launcher_icons:
+    dependency: "direct main"
+    description:
+      name: flutter_launcher_icons
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.7.5"
   flutter_open_chinese_convert:
     dependency: "direct dev"
     description:
@@ -385,6 +392,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.6.1"
+  yaml:
+    dependency: transitive
+    description:
+      name: yaml
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.2.1"
   zone_local:
     dependency: transitive
     description:
