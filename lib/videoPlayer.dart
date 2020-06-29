@@ -51,7 +51,7 @@ class _VideoAppState extends State<VideoApp> {
     bool _isPortrait = true;
     bool _titleImg = false;
     bool _wiki = false;
-    int _seconds = 10;
+    int _seconds = 15;
     int _fastSec = 0;
     int _backSec = 0;
     int _playSec = 0;
@@ -102,6 +102,7 @@ class _VideoAppState extends State<VideoApp> {
            _urlLoading();
         });
         initBrightnessState();
+        print(widget.typeOf);
         if(widget.typeOf == 'file')
             animeName();
         
@@ -110,26 +111,28 @@ class _VideoAppState extends State<VideoApp> {
     }
     Future<void> animeName() async {
         try {
-            final result = await InternetAddress.lookup('google.com');
+            final result = await InternetAddress.lookup('google.com.tw');
+        
             if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
                 
              
                 String fileName = widget.srcURL.split('/').last;
-                
+               
                 String name = await Moegirl().getFileName(fileName);
                 
-               
-                
-                if(name != ''){
+              
+                if( name != null){
+                  
                     var posts = await Moegirl().googlePosts(name).then((value) => value);
+                    // print(posts);
                     
                     var wPage = await Moegirl().getWikiPage(posts['title']);
-                   
+
+                    // print(wPage);
                     // String animeName = await Moegirl().getKeyWord('azur lane');
                     var content = await Moegirl().wikiGetPage(posts['title'], wPage['meogrl']);
-                    // print());
                     String headLine = await Moegirl().getNum(fileName , wPage['listWords']);
-                    print(headLine);
+                    // print(headLine);
                     this.setState(() {
                         titleText = posts['title'];
                         titleOrigin = posts['origin'];
@@ -144,6 +147,7 @@ class _VideoAppState extends State<VideoApp> {
                             headline = headLine;
                         }
                     });
+                   
                 }
             }
         } on SocketException catch (_) {
@@ -239,7 +243,7 @@ class _VideoAppState extends State<VideoApp> {
                         _backSec += _seconds;
                     });
                 //後退
-                _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() - _backSec));
+                _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() - _seconds));
             }
             else{
                 double jumpTo = timeTosec(_controller.value.position) + _fastSec.toDouble() ;
@@ -251,7 +255,7 @@ class _VideoAppState extends State<VideoApp> {
                 }
                
                 //快進
-                _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() + _fastSec));
+                _controller.seekTo(Duration(seconds: timeTosec(_controller.value.position).toInt() + _seconds));
             }
             setState(() {
                 _hidePlayControl = false; 
@@ -321,20 +325,20 @@ class _VideoAppState extends State<VideoApp> {
                                                             //         iconName 
                                                             //     ),
                                                             // ),
-                                                            Text((isReind)?  '${_backSec+10} 秒': '${_fastSec+10} 秒',
+                                                            Text((isReind)?  '${_backSec+_seconds} 秒': '${_fastSec+_seconds} 秒',
                                                             style: TextStyle(
-                                                                shadows:  <Shadow>[
-                                                                    Shadow(
-                                                                    offset: Offset(0.0, 0.0),
-                                                                    blurRadius: 20.0,
-                                                                    color: Colors.grey[50]),
-                                                                    Shadow(
-                                                                    offset: Offset(0.0, 0.0),
-                                                                    blurRadius: 10.0,
-                                                                    color: Colors.grey[500]),
-                                                                ],
+                                                                // shadows:  <Shadow>[
+                                                                //     Shadow(
+                                                                //     offset: Offset(0.0, 0.0),
+                                                                //     blurRadius: 20.0,
+                                                                //     color: Colors.grey[50]),
+                                                                //     Shadow(
+                                                                //     offset: Offset(0.0, 0.0),
+                                                                //     blurRadius: 10.0,
+                                                                //     color: Colors.grey[500]),
+                                                                // ],
                                                                 fontSize: 10.0,
-                                                                color: Colors.white,
+                                                                color: _isDarkMode?  Colors.white:  Colors.grey[400],
                                                                 ))
                                                     ]
                                                 ))
@@ -367,6 +371,7 @@ class _VideoAppState extends State<VideoApp> {
                                             '${timeTomin(_controller.value.position)}',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
+                                                    color: _isDarkMode?  Colors.white:  Colors.grey,
                                                     fontSize: 12
                                                 ),
                                             ),
@@ -403,6 +408,7 @@ class _VideoAppState extends State<VideoApp> {
                                             '${timeTomin(_controller.value.duration)}',
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
+                                                    color: _isDarkMode?  Colors.white:  Colors.grey,
                                                     fontSize: 12
                                                 ),
                                             ),
@@ -581,25 +587,35 @@ class _VideoAppState extends State<VideoApp> {
                 // alignment: Alignment(0, 24),
                 child: Offstage(
                     offstage: _hidePlayControl,
-                    child:IconButton(
-                        // iconSize: 12,
-                        onPressed: () {
-                            if(_isPortrait){
-                                Navigator.pop(context);
-                            }
-                            else{
-                                SystemChrome.setPreferredOrientations([
-                                    DeviceOrientation.portraitUp,
-                                    DeviceOrientation.landscapeRight,
-                                    DeviceOrientation.landscapeLeft,
-                                ]);
-                            }
-                        },
-                        icon: Icon(
-                            Icons.arrow_back,
-                            size: 18,
-                        ),
-                    )
+                    // child:
+                    //  ClipRRect( //容器圓形
+                    //     borderRadius: BorderRadius.circular(100.0),
+                    //     child: InkWell(
+                    //         // splashColor: Colors.black54,
+                    //         child:Container(
+                               
+                                child:  IconButton(
+                                        onPressed: () {
+                                            if(_isPortrait){
+                                                Navigator.pop(context);
+                                            }
+                                            else{
+                                                SystemChrome.setPreferredOrientations([
+                                                    DeviceOrientation.portraitUp,
+                                                    DeviceOrientation.landscapeRight,
+                                                    DeviceOrientation.landscapeLeft,
+                                                ]);
+                                            }
+                                        },
+                                        icon: Icon(
+                                            Icons.arrow_back,
+                                            size: 18,
+                                            color: _isDarkMode?  Colors.white:  Colors.grey,
+                                        ),
+                    //                 ),
+                    //         )
+                    //   ),   
+                    )  
                 ), 
             );
     }
@@ -631,6 +647,7 @@ class _VideoAppState extends State<VideoApp> {
                         icon: Icon(
                             _isPortrait ? Icons.fullscreen : Icons.fullscreen_exit,
                             size: 24,
+                            color: _isDarkMode?  Colors.white:  Colors.grey,
                         ),
                     )
                 ), 
@@ -761,7 +778,7 @@ class _VideoAppState extends State<VideoApp> {
                                         if(dragStart != null){
                                             final directionUp = offsetY > 0 ? true : false;
                                             
-                                            if(dy.abs() > 5 ){
+                                            if(dy.abs() > 10 ){
                                                
                                                 offsetY = offsetY.abs();
 
@@ -810,7 +827,7 @@ class _VideoAppState extends State<VideoApp> {
                                                       _backSec = offsetX.toInt().abs();
                                                       _hidefastControl = true;
                                                     });
-                                                     print(offsetX.toInt());
+                                                    //  print(offsetX.toInt());
                                                 _controller.seekTo(Duration(seconds: _playSec + offsetX.toInt()));
                                             }
                                         }
@@ -968,7 +985,7 @@ class _VideoAppState extends State<VideoApp> {
                                           Padding(
                                             padding: EdgeInsets.all(8),
                                             child:
-                                            Card(
+                                            originContent.length > 0 ? Card(
                                                 clipBehavior: Clip.antiAliasWithSaveLayer,
                                                 child: Column(
                                                 children: <Widget>[
@@ -980,14 +997,14 @@ class _VideoAppState extends State<VideoApp> {
                                                         ),
                                                     ) 
                                                 ])
-                                            ),
+                                            ):Container(),
                                         ),
                                         
                                     ],
                                 ),
                                 ExpansionTile(
                                     title: Text('動畫資訊'),
-                                    initiallyExpanded: false, // 是否默认展开
+                                    initiallyExpanded: false, 
                                     children: <Widget>[
                                         Padding(
                                             padding: EdgeInsets.all(8),

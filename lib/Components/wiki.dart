@@ -28,6 +28,7 @@ class Moegirl {
     List<String> changeSeason= ['劇場版','冬','春','夏','秋'];
     Future<String> getFileName(String fileName) async{
         RegExp reg = RegExp(r'([\w-.&]+)([\w\s]+)',multiLine: true);
+        // print(reg.hasMatch(fileName));
         if(reg.hasMatch(fileName) == true){
             Iterable<Match> matches = reg.allMatches(fileName);
             // RegExp dig = RegExp(r'([\w-.]+)([\w\s]+)',multiLine: true);
@@ -40,11 +41,11 @@ class Moegirl {
                 
             }
             else{
-                 return null;
+                 return '';
             }
         }
-       
-        return null;
+        
+        return '';
     }
     Future<String> getNum(String fileName, Map listWords) async{
         RegExp reg = RegExp(r'([\w-.&]+)([\w\s]+)',multiLine: true);
@@ -96,7 +97,7 @@ class Moegirl {
     Future <Map<String, Object>> googlePosts(animeFile) async {
         this.animeFile = animeFile;
         animeFile = animeFile.replaceAll(new RegExp(r'\s', multiLine: true),'+');
-        String url = 'https://www.google.com/search?hl=zh-tw&lr=lang_zh-TW&q=${animeFile}';
+        String url = 'https://www.google.com.tw/search?hl=zh-tw&lr=lang_zh-TW&q=${animeFile}';
         
         // final driver = new HtmlDriver();
         // Open a web page.
